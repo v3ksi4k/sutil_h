@@ -1,0 +1,1 @@
+A simple set of utilities that i use in my C projects
