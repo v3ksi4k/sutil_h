@@ -27,15 +27,18 @@ SOFTWARE.
 #ifndef SUTIL_H
 #define SUTIL_H
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 #include <stdbool.h>
 
-#define KB(n) (1000 * (n))
-#define KiB(n) (1024 * (n))
-#define MB(n) (1000000 * (n))
-#define MiB(n) (1048576 * (n))
-#define GB(n) (1000000000 * (n))
-#define GiB(n) (1073741824 * (n))
+#define KB(n) (1000UL * (n))
+#define KiB(n) (1024UL  * (n))
+#define MB(n) (1000000UL * (n))
+#define MiB(n) (1048576UL * (n))
+#define GB(n) (1000000000UL * (n))
+#define GiB(n) (1073741824UL * (n))
 #define MEM_ALIGN(n) (((n) + 7) & ~7)
 
 #ifndef SUTIL_NO_LIST
@@ -103,12 +106,16 @@ do { \
 
 #ifndef SUTIL_NO_ARENA
 
-typedef struct {
+#define ARENA_DEFAULT 1024
+
+typedef struct MemBlock MemBlock;
+
+struct MemBlock {
     size_t capacity;
     size_t offset;
     void *items;
     MemBlock *next;
-} MemBlock;
+};
 
 typedef struct {
     MemBlock *head; 
@@ -123,6 +130,37 @@ void *arena_alloc(MemArena *arena, size_t size);
 void arena_free(MemArena *arena);
 
 #endif // SUTIL_NO_ARENA
+
+#ifndef SUTIL_NO_SB
+
+#define SB(sb) sb_string(sb)
+
+typedef struct StringChunk StringChunk;
+
+struct StringChunk {
+    StringChunk *next;
+    char *data;
+    size_t size;
+};
+
+typedef struct {
+    StringChunk *head;
+    StringChunk *tail;
+    size_t size;
+} SBuilder;
+
+StringChunk *string_chunk_new(char *data, size_t data_len);
+SBuilder sb_new();
+void sb_free(SBuilder *sb);
+
+void sb_append(SBuilder *sb, char *str);
+void sb_appendf(SBuilder *sb, char *format, ...);
+
+char *sb_string(SBuilder *sb);
+
+#define SB_PRINT(sb) printf("%s", sb_string(sb))
+
+#endif // SUTIL_NO_SB
 
 //TODO: Later change this to ifdef
 #ifndef SUTIL_IMPLEMENTATION
@@ -182,10 +220,115 @@ void arena_free(MemArena *arena) {
 
         block = tmp;
     }
+
+    arena->head = NULL;
+    arena->tail = NULL;
 }
 
 #endif // SUTIL_NO_ARENA
 
+#ifndef SUTIL_NO_SB
+
+StringChunk *string_chunk_new(char *data, size_t data_len) {
+    StringChunk *result = (StringChunk*)malloc(sizeof(StringChunk) + data_len);
+
+    result->data = (char*)(result + 1);
+    memcpy(result->data, data, data_len);
+    result->size = data_len;
+
+    return result;
+}
+
+SBuilder sb_new() {
+    SBuilder result;
+
+    result.head = NULL;
+    result.size = 0;
+    result.tail = NULL;
+
+    return result;
+};
+
+void sb_append(SBuilder *sb, char *str) {
+    size_t str_len = strlen(str);
+    StringChunk *chunk = string_chunk_new(str, str_len);
+
+    if(sb->head == NULL) {
+        sb->head = chunk; 
+        sb->tail = chunk;
+    } else {
+        sb->tail->next = chunk;
+        sb->tail = chunk;
+    }
+
+    sb->size += str_len;
+};
+
+void sb_appendf(SBuilder *sb, char *format, ...) {
+    va_list args;
+
+    va_start(args, format);
+
+    char buffer[1024];
+    char *buf = buffer;
+
+    size_t size = vsnprintf(buf, sizeof(buffer), format, args);
+    
+    if(size > sizeof(buffer)) {
+        buf = (char*)malloc(size);
+        vsnprintf(buf, size, format, args);
+    }
+
+    va_end(args);
+
+    StringChunk *chunk = string_chunk_new(buf, size);
+    if(buf != buffer) free(buf);
+
+    if(sb->head == NULL) {
+        sb->head = chunk; 
+        sb->tail = chunk;
+    } else {
+        sb->tail->next = chunk;
+        sb->tail = chunk;
+    }
+
+    sb->size += size;
+}
+
+char *sb_string(SBuilder *sb) {
+    size_t offset = 0;
+    char *result = (char*)malloc(sb->size + 1);
+    StringChunk *chunk = sb->head;
+
+    while(chunk != NULL) {
+        memcpy(result + offset, chunk->data, chunk->size);
+        offset += chunk->size;
+        chunk = chunk->next;
+    }
+
+    result[sb->size] = '\0';
+
+    return result;
+}
+
+void sb_free(SBuilder *sb) {
+    StringChunk *chunk = sb->head;
+
+    while(chunk != NULL) {
+        StringChunk *tmp = chunk->next;
+
+        free(chunk->data);
+        free(chunk);
+
+        chunk = tmp;
+    }
+
+    sb->head = NULL;
+    sb->tail = NULL;
+    sb->size = 0;
+}
+
+#endif // SUTIL_NO_SB
 
 #endif // SUTIL_IMPLEMENTATION
 
