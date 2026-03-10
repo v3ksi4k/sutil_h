@@ -34,11 +34,11 @@ SOFTWARE.
 #include <stdbool.h>
 
 #define KB(n) (1000UL * (n))
-#define KiB(n) (1024UL  * (n))
+#define KiB(n) ((n) >> 10)
 #define MB(n) (1000000UL * (n))
-#define MiB(n) (1048576UL * (n))
+#define MiB(n) ((n) >> 20)
 #define GB(n) (1000000000UL * (n))
-#define GiB(n) (1073741824UL * (n))
+#define GiB(n) ((n) >> 30)
 #define MEM_ALIGN(n) (((n) + 7) & ~7)
 
 #ifndef SUTIL_NO_LIST
