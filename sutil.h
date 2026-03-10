@@ -41,6 +41,9 @@ SOFTWARE.
 #define GiB(n) ((n) >> 30)
 #define MEM_ALIGN(n) (((n) + 7) & ~7)
 
+
+
+// ----------List (Dynamic Array)----------
 #ifndef SUTIL_NO_LIST
 
 #define DEFINE_LIST(type, prefix) \
@@ -104,6 +107,8 @@ do { \
 
 #endif // SUTIL_NO_LIST
 
+
+// ----------Memory Arena----------
 #ifndef SUTIL_NO_ARENA
 
 #define ARENA_DEFAULT 1024
@@ -129,43 +134,7 @@ MemArena arena_new(size_t block_size);
 void *arena_alloc(MemArena *arena, size_t size);
 void arena_free(MemArena *arena);
 
-#endif // SUTIL_NO_ARENA
-
-#ifndef SUTIL_NO_SB
-
-#define SB(sb) sb_string(sb)
-
-typedef struct StringChunk StringChunk;
-
-struct StringChunk {
-    StringChunk *next;
-    char *data;
-    size_t size;
-};
-
-typedef struct {
-    StringChunk *head;
-    StringChunk *tail;
-    size_t size;
-} SBuilder;
-
-StringChunk *string_chunk_new(char *data, size_t data_len);
-SBuilder sb_new();
-void sb_free(SBuilder *sb);
-
-void sb_append(SBuilder *sb, char *str);
-void sb_appendf(SBuilder *sb, char *format, ...);
-
-char *sb_string(SBuilder *sb);
-
-#define SB_PRINT(sb) printf("%s", sb_string(sb))
-
-#endif // SUTIL_NO_SB
-
-//TODO: Later change this to ifdef
-#ifndef SUTIL_IMPLEMENTATION
-
-#ifndef SUTIL_NO_ARENA
+#ifdef SUTIL_IMPLEMENTATION
 
 MemBlock *mem_block_new(size_t capacity) {
     MemBlock *result = (MemBlock*)malloc(sizeof(MemBlock));
@@ -225,9 +194,41 @@ void arena_free(MemArena *arena) {
     arena->tail = NULL;
 }
 
+#endif // SUTIL_IMPLEMENTATION
 #endif // SUTIL_NO_ARENA
 
+
+// ----------String Builder----------
 #ifndef SUTIL_NO_SB
+
+#define SB(sb) sb_string(sb)
+
+typedef struct StringChunk StringChunk;
+
+struct StringChunk {
+    StringChunk *next;
+    char *data;
+    size_t size;
+};
+
+typedef struct {
+    StringChunk *head;
+    StringChunk *tail;
+    size_t size;
+} SBuilder;
+
+StringChunk *string_chunk_new(char *data, size_t data_len);
+SBuilder sb_new();
+void sb_free(SBuilder *sb);
+
+void sb_append(SBuilder *sb, char *str);
+void sb_appendf(SBuilder *sb, char *format, ...);
+
+char *sb_string(SBuilder *sb);
+
+#define SB_PRINT(sb) printf("%s", sb_string(sb))
+
+#ifdef SUTIL_IMPLEMENTATION
 
 StringChunk *string_chunk_new(char *data, size_t data_len) {
     StringChunk *result = (StringChunk*)malloc(sizeof(StringChunk) + data_len);
@@ -328,8 +329,7 @@ void sb_free(SBuilder *sb) {
     sb->size = 0;
 }
 
-#endif // SUTIL_NO_SB
-
 #endif // SUTIL_IMPLEMENTATION
+#endif // SUTIL_NO_SB
 
 #endif // SUTIL_H
