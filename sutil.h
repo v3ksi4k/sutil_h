@@ -44,7 +44,6 @@ SOFTWARE.
 
 
 // ----------List (Dynamic Array)----------
-#ifndef SUTIL_NO_LIST
 
 #define DEFINE_LIST(type, prefix) \
 typedef struct { \
@@ -105,12 +104,8 @@ do { \
 #define list_pop_n_s(list, n) (((list)->item_count > n-1) ? ((list)->item_count-=n, false) : true)
 #define list_end_s(list, result) (((list)->item_count > 0) ? ((result) = (list)->items[(list)->item_count-1], false) : true)
 
-#endif // SUTIL_NO_LIST
-
 
 // ----------Memory Arena----------
-#ifndef SUTIL_NO_ARENA
-
 #define ARENA_DEFAULT 1024
 
 typedef struct MemBlock MemBlock;
@@ -130,9 +125,11 @@ typedef struct {
 
 MemBlock *mem_block_new(size_t capacity);
 
-MemArena arena_new(size_t block_size);
+MemArena arena_new_bs(size_t block_size);
 void *arena_alloc(MemArena *arena, size_t size);
 void arena_free(MemArena *arena);
+
+#define arena_new() arena_new_bs(ARENA_DEFAULT)
 
 #ifdef SUTIL_IMPLEMENTATION
 
@@ -147,7 +144,7 @@ MemBlock *mem_block_new(size_t capacity) {
     return result;
 }
 
-MemArena arena_new(size_t block_size) {
+MemArena arena_new_bs(size_t block_size) {
     MemArena result;    
 
     result.block_size = block_size;
@@ -195,12 +192,9 @@ void arena_free(MemArena *arena) {
 }
 
 #endif // SUTIL_IMPLEMENTATION
-#endif // SUTIL_NO_ARENA
 
 
 // ----------String Builder----------
-#ifndef SUTIL_NO_SB
-
 #define SB(sb) sb_string(sb)
 
 typedef struct StringChunk StringChunk;
@@ -236,6 +230,7 @@ StringChunk *string_chunk_new(char *data, size_t data_len) {
     result->data = (char*)(result + 1);
     memcpy(result->data, data, data_len);
     result->size = data_len;
+    result->next = NULL;
 
     return result;
 }
@@ -267,8 +262,10 @@ void sb_append(SBuilder *sb, char *str) {
 
 void sb_appendf(SBuilder *sb, char *format, ...) {
     va_list args;
+    va_list args_cp;
 
     va_start(args, format);
+    va_copy(args_cp, args);
 
     char buffer[1024];
     char *buf = buffer;
@@ -318,7 +315,6 @@ void sb_free(SBuilder *sb) {
     while(chunk != NULL) {
         StringChunk *tmp = chunk->next;
 
-        free(chunk->data);
         free(chunk);
 
         chunk = tmp;
@@ -330,6 +326,29 @@ void sb_free(SBuilder *sb) {
 }
 
 #endif // SUTIL_IMPLEMENTATION
-#endif // SUTIL_NO_SB
+
+
+
+// ----------File Utilities----------
+char *file_readall(char *path);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+char *file_readall(char *path) {
+    SBuilder sb = sb_new();
+    FILE *f = fopen(path, "r");
+    char buffer[1024];
+
+    while(!feof(f)) {
+        size_t bytes_read = fread(buffer, 1, sizeof(buffer) - 1, f);
+        buffer[bytes_read] = '\0';
+        sb_append(&sb, buffer);
+    }
+    fclose(f);
+
+    return sb_string(&sb);
+}
+
+#endif // SUTIL_IMPLEMENTATION
 
 #endif // SUTIL_H
