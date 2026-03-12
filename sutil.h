@@ -95,7 +95,14 @@ do { \
         (list)->items = realloc((list)->items, (list)->capacity*sizeof(*((list)->items))); \
     } \
     (list)->items[(list)->item_count-1] = item; \
-} while(0) \
+} while(0)
+
+#define list_push_array(list, array) \
+do { \
+    for(int i = 0; i < sizeof(array)/sizeof(array[0]); i++) { \
+        list_push(list, array[i]); \
+    } \
+} while(0)
 
 #define list_get(list, n) (list)->items[n]
 #define list_pop(list) (list)->item_count--
