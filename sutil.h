@@ -34,14 +34,24 @@ SOFTWARE.
 #include <stdbool.h>
 #include <time.h>
 
-#define KB(n) (1000UL * (n))
-#define KiB(n) ((n) >> 10)
-#define MB(n) (1000000UL * (n))
-#define MiB(n) ((n) >> 20)
-#define GB(n) (1000000000UL * (n))
-#define GiB(n) ((n) >> 30)
-#define MEM_ALIGN(n) (((n) + 7) & ~7)
 
+
+// ----------Units and memory----------
+#define KB(n) (1000UL * (n))
+#define KiB(n) ((n) << 10)
+#define MB(n) (1000000UL * (n))
+#define MiB(n) ((n) << 20)
+#define GB(n) (1000000000UL * (n))
+#define GiB(n) ((n) << 30)
+
+#define IN_KB(n) ((n) / 1000.0))
+#define IN_KiB(n) ((n) / 1024.0)
+#define IN_MB(n) ((n) / 1000000.0)
+#define IN_MiB(n) ((n) / 1048576.0)
+#define IN_GB(n) ((n) / 1000000000.0)
+#define IN_GiB(n) ((n) / 1073741824.0)
+
+#define MEM_ALIGN(n) (((n) + 7) & ~7)
 
 
 // ----------List (Dynamic Array)----------
@@ -81,6 +91,8 @@ do { \
 
 #define list_len(list) (list)->item_count
 #define list_capacity(list) (list)->capacity
+#define list_size_cap(list) (list)->capacity * sizeof(*((list)->items))
+#define list_size_count(list) (list)->item_count * sizeof(*((list)->items))
 
 // #define list_foreach(list, name) for(typeof((list)->items) (name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
 #define list_foreach(list, type, name) for(type *(name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
@@ -403,6 +415,6 @@ char *file_readall(char *path) {
 // ----------Timer----------
 #define timer_set(name) clock_t _sutil_clock_##name = clock();
 #define timer_elapsed(name) (double)(clock() - _sutil_clock_##name) / CLOCKS_PER_SEC
-#define timer_print(name) printf("Elapsed (name): %fs\n", clock_elapsed(name))
+#define timer_print(name) printf("Elapsed (name): %fs\n", timer_elapsed(name))
 
 #endif // SUTIL_H
