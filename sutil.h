@@ -44,6 +44,7 @@ SOFTWARE.
 
 
 // ----------List (Dynamic Array)----------
+#define LIST_DEFAULT_INITIAL_CAPACITY 16
 
 #define DEFINE_LIST(type, prefix) \
 typedef struct { \
@@ -52,7 +53,8 @@ typedef struct { \
     type *items; \
 } prefix##_list;
 
-#define list_new(list_type, capacity) (list_type){.capacity = capacity, .item_count = 0, .items = malloc(sizeof(type)*capacity)}
+#define list_new_ic(type, prefix, initial_capacity) (prefix##_list){.capacity = initial_capacity, .item_count = 0, .items = malloc(sizeof(type)*initial_capacity)}
+#define list_new(type, prefix) list_new_ic(type, prefix, LIST_DEFAULT_INITIAL_CAPACITY)
 
 #define list_free(list) \
 do { \
@@ -79,7 +81,8 @@ do { \
 #define list_len(list) (list)->item_count
 #define list_capacity(list) (list)->capacity
 
-#define list_foreach(list, name) for(typeof((list)->items) (name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
+// #define list_foreach(list, name) for(typeof((list)->items) (name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
+#define list_foreach(list, type, name) for(type *(name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
 
 #define list_push(list, item) \
 do { \
@@ -106,7 +109,7 @@ do { \
 
 
 // ----------Memory Arena----------
-#define ARENA_DEFAULT 1024
+#define ARENA_DEFAULT_BLOCK_SIZE 1024
 
 typedef struct MemBlock MemBlock;
 
@@ -129,7 +132,7 @@ MemArena arena_new_bs(size_t block_size);
 void *arena_alloc(MemArena *arena, size_t size);
 void arena_free(MemArena *arena);
 
-#define arena_new() arena_new_bs(ARENA_DEFAULT)
+#define arena_new() arena_new_bs(ARENA_DEFAULT_BLOCK_SIZE)
 
 #ifdef SUTIL_IMPLEMENTATION
 
