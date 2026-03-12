@@ -36,6 +36,17 @@ SOFTWARE.
 
 
 
+// ----------Utility macros----------
+#define TODO(msg) \
+do { \
+    fprintf(stderr, "ERROR - TODO: "msg"\n"); \
+    exit(1); \
+} while(0)
+
+#define UNUSED(x) (void)x
+
+
+
 // ----------Units and memory----------
 #define KB(n) (1000UL * (n))
 #define KiB(n) ((n) << 10)
