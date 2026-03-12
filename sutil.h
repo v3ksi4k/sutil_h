@@ -329,6 +329,42 @@ void sb_free(SBuilder *sb) {
 
 
 
+// ----------Short String----------
+typedef struct {
+    data[64];
+} ShortString;
+
+#define SS(ss) ss.data
+
+ShortString ss_new(char *str);
+ShortString ss_new_f(char *format, ...);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+ShortString ss_new(char *str) {
+    ShortString result;
+
+    memcpy(result.data, str, sizeof(result.data) - 1);
+    result.data[sizeof(result.data)-1] = '\0';
+
+    return result;
+}
+
+ShortString ss_new_f(char *format, ...) {
+    ShortString result;
+    va_list args;
+
+    va_start(args, format);
+    vsnprintf(result.data, sizeof(result.data), format, args);
+    va_end(args);
+
+    return result;
+}
+
+#endif // SUTIL_IMPLEMENTATION
+
+
+
 // ----------File Utilities----------
 char *file_readall(char *path);
 
