@@ -331,7 +331,7 @@ void sb_free(SBuilder *sb) {
 
 // ----------Short String----------
 typedef struct {
-    data[64];
+    char data[64];
 } ShortString;
 
 #define SS(ss) ss.data
