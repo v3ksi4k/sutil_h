@@ -32,6 +32,7 @@ SOFTWARE.
 #include <string.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <time.h>
 
 #define KB(n) (1000UL * (n))
 #define KiB(n) ((n) >> 10)
@@ -396,5 +397,12 @@ char *file_readall(char *path) {
 }
 
 #endif // SUTIL_IMPLEMENTATION
+
+
+
+// ----------Timer----------
+#define timer_set(name) clock_t _sutil_clock_##name = clock();
+#define timer_elapsed(name) (double)(clock() - _sutil_clock_##name) / CLOCKS_PER_SEC
+#define timer_print(name) printf("Elapsed (name): %fs\n", clock_elapsed(name))
 
 #endif // SUTIL_H
