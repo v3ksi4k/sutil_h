@@ -35,7 +35,6 @@ SOFTWARE.
 #include <time.h>
 
 
-
 // ----------Utility macros----------
 #define TODO(msg) \
 do { \
@@ -44,7 +43,6 @@ do { \
 } while(0)
 
 #define UNUSED(x) (void)x
-
 
 
 // ----------Units and memory----------
@@ -362,7 +360,6 @@ void sb_free(SBuilder *sb) {
 #endif // SUTIL_IMPLEMENTATION
 
 
-
 // ----------Short String----------
 typedef struct {
     char data[64];
@@ -398,7 +395,6 @@ ShortString ss_new_f(char *format, ...) {
 #endif // SUTIL_IMPLEMENTATION
 
 
-
 // ----------File Utilities----------
 char *file_readall(char *path);
 
@@ -420,7 +416,6 @@ char *file_readall(char *path) {
 }
 
 #endif // SUTIL_IMPLEMENTATION
-
 
 
 // ----------Timer----------
