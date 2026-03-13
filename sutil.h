@@ -38,8 +38,14 @@ SOFTWARE.
 // ----------Utility macros----------
 #define TODO(msg) \
 do { \
-    fprintf(stderr, "%s:%d: TODO: "msg"\n", __FILE__, __LINE__); \
-    exit(1); \
+    fprintf(stderr, "%s:%d:%s: TODO: "msg"\n", __FILE__, __LINE__, __func__); \
+    abort(); \
+} while(0)
+
+#define UNREACHABLE() \
+do { \
+    fprintf(stderr, "%s:%d:%s: reached unreachable code\n", __FILE__, __LINE__, __func__); \
+    abort(); \
 } while(0)
 
 #define UNUSED(x) (void)x
