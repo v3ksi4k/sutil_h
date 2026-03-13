@@ -38,7 +38,7 @@ SOFTWARE.
 // ----------Utility macros----------
 #define TODO(msg) \
 do { \
-    fprintf(stderr, "ERROR - TODO: "msg"\n"); \
+    fprintf(stderr, "%s:%d: TODO: "msg"\n", __FILE__, __LINE__); \
     exit(1); \
 } while(0)
 
