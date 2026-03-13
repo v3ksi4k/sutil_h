@@ -106,6 +106,13 @@ do { \
 // #define list_foreach(list, name) for(typeof((list)->items) (name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
 #define list_foreach(list, type, name) for(type *(name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
 
+#define list_map(list, type, function, ...) \
+do { \
+    list_foreach(list, type, _sutil_item) { \
+        function(_sutil_item, ##__VA_ARGS__); \
+    } \
+} while(0)
+
 #define list_push(list, item) \
 do { \
     (list)->item_count++; \
@@ -121,7 +128,7 @@ do { \
 
 #define list_push_array(list, array) \
 do { \
-    for(int i = 0; i < sizeof(array)/sizeof(array[0]); i++) { \
+    for(size_t i = 0; i < sizeof(array)/sizeof(array[0]); i++) { \
         list_push(list, array[i]); \
     } \
 } while(0)
