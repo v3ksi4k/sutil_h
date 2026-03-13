@@ -252,7 +252,9 @@ void sb_appendf(SBuilder *sb, char *format, ...);
 
 char *sb_string(SBuilder *sb);
 
-#define SB_PRINT(sb) printf("%s", sb_string(sb))
+#define sb_print(sb) printf("%s\n", sb_string(sb))
+
+#define sb_size(sb) (sb)->size
 
 #ifdef SUTIL_IMPLEMENTATION
 
@@ -396,11 +398,12 @@ ShortString ss_new_f(char *format, ...) {
 
 
 // ----------File Utilities----------
+size_t file_readall_sz(char *path, char **out_ptr);
 char *file_readall(char *path);
 
 #ifdef SUTIL_IMPLEMENTATION
 
-char *file_readall(char *path) {
+size_t file_readall_sz(char *path, char **out_ptr) {
     SBuilder sb = sb_new();
     FILE *f = fopen(path, "r");
     char buffer[1024];
@@ -412,7 +415,16 @@ char *file_readall(char *path) {
     }
     fclose(f);
 
-    return sb_string(&sb);
+    *out_ptr = sb_string(&sb);
+    return sb_size(&sb);
+}
+
+char *file_readall(char *path) {
+    char *result;
+    
+    file_readall_sz(path, &result);
+    
+    return result;
 }
 
 #endif // SUTIL_IMPLEMENTATION
