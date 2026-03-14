@@ -385,6 +385,9 @@ typedef struct {
 ShortString ss_new(char *str);
 ShortString ss_new_f(char *format, ...);
 
+#define ssprint(ss) printf("%s\n", SS(ss))
+#define ssfprint(ss, file) fprintf(file, "%s\n", SS(ss))
+
 #ifdef SUTIL_IMPLEMENTATION
 
 ShortString ss_new(char *str) {
@@ -444,7 +447,7 @@ char *file_readall(char *path) {
 
 
 // ----------Timer----------
-#define timer_set(name) clock_t _sutil_clock_##name = clock();
+#define timer_set(name) clock_t _sutil_clock_##name = clock()
 #define timer_elapsed(name) (double)(clock() - _sutil_clock_##name) / CLOCKS_PER_SEC
 #define timer_print(name) printf("Elapsed (name): %fs\n", timer_elapsed(name))
 
