@@ -174,6 +174,9 @@ MemArena arena_new_bs(size_t block_size);
 void *arena_alloc(MemArena *arena, size_t size);
 void arena_free(MemArena *arena);
 
+#define arena_alloc_type(arena, type) (type*)arena_alloc(arena, sizeof(type))
+#define arena_alloc_array(arena, type, size) (type*)arena_alloc(arena, sizeof(type)*size)
+
 #define arena_new() arena_new_bs(ARENA_DEFAULT_BLOCK_SIZE)
 
 #ifdef SUTIL_IMPLEMENTATION
