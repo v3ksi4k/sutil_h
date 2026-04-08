@@ -97,7 +97,7 @@ typedef struct { \
     type *items; \
 } name;
 
-#define list_new_named_ic(type, name, initial_capacity) (name){.capacity = initial_capacity, .item_count = 0, .items = malloc(sizeof(type)*initial_capacity)}
+#define list_new_named_ic(type, name, initial_capacity) (name){.capacity = initial_capacity, .item_count = 0, .items = (type*)malloc(sizeof(type)*initial_capacity)}
 #define list_new_named(type, name) list_new_named_ic(type, name, LIST_DEFAULT_INITIAL_CAPACITY)
 
 #define list_new_ic(type, prefix, initial_capacity) list_new_named_ic(type, prefix##_list, initial_capacity)
