@@ -34,6 +34,7 @@ SOFTWARE.
 #include <stdbool.h>
 #include <stdint.h>
 #include <limits.h>
+#include <ctype.h>
 #include <time.h>
 
 
@@ -266,7 +267,7 @@ void arena_free(MemArena *arena) {
 
 // ----------Dynamic String----------
 #define DS_FMT "%.*s"
-#define DS_ARGS(ds) ((ds)->len > INT_MAX) ? INT_MAX : (int)(ds)->len, (ds)->data
+#define DS_ARGS(ds) ((ds)->len > INT_MAX) ? INT_MAX : (int)((ds)->len), (ds)->data
 
 #define ds_len(ds) (ds)->len
 
@@ -605,6 +606,11 @@ char *file_readall(char *path) {
     file_readall_sz(path, &result);
     
     return result;
+}
+
+DString file_readall_ds(char *path, char **out_ptr) {
+    *out_ptr = file_readall(path);
+    return ds_new(*out_ptr);
 }
 
 #endif // SUTIL_IMPLEMENTATION
