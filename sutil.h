@@ -33,6 +33,7 @@ SOFTWARE.
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <limits.h>
 #include <time.h>
 
 
@@ -258,6 +259,145 @@ void arena_free(MemArena *arena) {
 
     arena->head = NULL;
     arena->tail = NULL;
+}
+
+#endif // SUTIL_IMPLEMENTATION
+
+
+// ----------Dynamic String----------
+#define DS_FMT "%.*s"
+#define DS_ARGS(ds) ((ds)->len > INT_MAX) ? INT_MAX : (int)(ds)->len, (ds)->data
+
+#define ds_len(ds) (ds)->len
+
+typedef struct {
+    size_t len;
+    char *data;
+} DString;
+
+DString ds_new(char *str);
+
+void ds_trim_left(DString *str);
+void ds_trim_right(DString *str);
+void ds_trim(DString *str);
+
+void ds_chop_left(DString *str);
+void ds_chop_right(DString *str);
+
+DString ds_chop_left_until(DString *str, char delimeter);
+DString ds_chop_right_until(DString *str, char delimeter);
+
+DString ds_chop_word_left(DString *str);
+DString ds_chop_word_right(DString *str);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+DString ds_new(char *str) {
+    return (DString) {
+        .len = strlen(str),
+        .data = str
+    };
+};
+
+void ds_trim_left(DString *str) {
+    while(str->len > 0 && isspace(str->data[0])) {
+        str->len--;
+        str->data++;
+    }
+}
+
+void ds_trim_right(DString *str) {
+    while(str->len > 0 && isspace(str->data[str->len-1])) {
+        str->len--;
+    }
+}
+
+void ds_trim(DString *str) {
+    ds_trim_right(str);
+    ds_trim_left(str);
+}
+
+void ds_chop_left(DString *str) {
+    if(str->len > 0) {
+        str->len--;
+        str->data++;
+    }
+}
+
+void ds_chop_right(DString *str) {
+    if(str->len > 0) str->len--;
+}
+
+DString ds_chop_left_until(DString *str, char delimeter) {
+    DString res;
+    res.data = str->data;
+
+    size_t orig_len = str->len;
+    while(str->len > 0 && str->data[0] != delimeter) {
+        str->len--;
+        str->data++;
+    }
+    str->len--;
+    str->data++;
+
+    res.len = orig_len - str->len;
+
+    return res;
+};
+
+DString ds_chop_right_until(DString *str, char delimeter) {
+    DString res;
+
+    size_t orig_len = str->len;
+    while(str->len > 0 && str->data[str->len - 1] != delimeter) {
+        str->len--;
+    }
+
+    res.data = str->data + str->len;
+    res.len = orig_len - str->len;
+
+    return res;
+};
+
+DString ds_chop_word_left(DString *str) {
+    DString res;
+
+    while(str->len > 0 && isspace(str->data[0])) {
+        str->len--;
+        str->data++;
+    }
+
+    size_t orig_len = str->len;
+    res.data = str->data;
+
+    while(str->len > 0 && !isspace(str->data[0])) {
+        str->len--;
+        str->data++;
+    }
+    str->len--;
+    str->data++;
+
+    res.len = orig_len - str->len - 1;
+
+    return res;
+}
+
+DString ds_chop_word_right(DString *str) {
+    DString res;
+
+    while(str->len > 0 && isspace(str->data[str->len - 1])) {
+        str->len--;
+    }
+
+    size_t orig_len = str->len;
+    while(str->len > 0 && !isspace(str->data[str->len - 1])) {
+        str->len--;
+    }
+
+    res.data = str->data + str->len;
+    res.len = orig_len - str->len;
+
+    return res;
 }
 
 #endif // SUTIL_IMPLEMENTATION
