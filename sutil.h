@@ -88,15 +88,20 @@ typedef double   f64;
 // ----------List (Dynamic Array)----------
 #define LIST_DEFAULT_INITIAL_CAPACITY 16
 
-#define DEFINE_LIST(type, prefix) \
+#define DEFINE_LIST(type, prefix) DEFINE_LIST_NAMED(type, prefix##_list)
+
+#define DEFINE_LIST_NAMED(type, name) \
 typedef struct { \
     size_t capacity; \
     size_t item_count; \
     type *items; \
-} prefix##_list;
+} name;
 
-#define list_new_ic(type, prefix, initial_capacity) (prefix##_list){.capacity = initial_capacity, .item_count = 0, .items = malloc(sizeof(type)*initial_capacity)}
-#define list_new(type, prefix) list_new_ic(type, prefix, LIST_DEFAULT_INITIAL_CAPACITY)
+#define list_new_named_ic(type, name, initial_capacity) (name){.capacity = initial_capacity, .item_count = 0, .items = malloc(sizeof(type)*initial_capacity)}
+#define list_new_named(type, name) list_new_named_ic(type, name, LIST_DEFAULT_INITIAL_CAPACITY)
+
+#define list_new_ic(type, prefix, initial_capacity) list_new_named_ic(type, prefix##_list, initial_capacity)
+#define list_new(type, prefix) list_new_named_ic(type, prefix##_list, LIST_DEFAULT_INITIAL_CAPACITY)
 
 #define list_free(list) \
 do { \
