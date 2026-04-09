@@ -274,6 +274,8 @@ void arena_free(MemArena *arena) {
 #define ds_peek_left(ds) (ds)->data[0]
 #define ds_peek_right(ds) (ds)->data[(ds)->len-1]
 
+#define ds_empty(ds) ((ds)->len == 0) ? 1 : 0
+
 typedef struct {
     size_t len;
     char *data;
