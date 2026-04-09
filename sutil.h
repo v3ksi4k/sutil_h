@@ -269,6 +269,8 @@ void arena_free(MemArena *arena) {
 #define DS_FMT "%.*s"
 #define DS_ARGS(ds) ((ds)->len > INT_MAX) ? INT_MAX : (int)((ds)->len), (ds)->data
 
+#define ds_foreach(ds, name) for(char *(name) = (ds)->data; (name) < (ds)->data + (ds)->len; (name)++)
+
 #define ds_len(ds) (ds)->len
 
 #define ds_empty(ds) ((ds)->len == 0) ? 1 : 0
@@ -279,6 +281,8 @@ typedef struct {
 } DString;
 
 DString ds_new(char *str);
+
+bool ds_contains(DString *str, char needle);
 
 char ds_peek_left(DString *str);
 char ds_peek_right(DString *str);
@@ -304,6 +308,13 @@ DString ds_new(char *str) {
         .data = str
     };
 };
+
+bool ds_contains(DString *str, char needle) {
+    ds_foreach(str, chr) {
+        if(*chr == needle) return true;
+    }
+    return false;
+}
 
 char ds_peek_left(DString *str) {
     if(str->len == 0) return '\0';
