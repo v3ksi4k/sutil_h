@@ -271,9 +271,6 @@ void arena_free(MemArena *arena) {
 
 #define ds_len(ds) (ds)->len
 
-#define ds_peek_left(ds) (ds)->data[0]
-#define ds_peek_right(ds) (ds)->data[(ds)->len-1]
-
 #define ds_empty(ds) ((ds)->len == 0) ? 1 : 0
 
 typedef struct {
@@ -282,6 +279,9 @@ typedef struct {
 } DString;
 
 DString ds_new(char *str);
+
+char ds_peek_left(DString *str);
+char ds_peek_right(DString *str);
 
 void ds_trim_left(DString *str);
 void ds_trim_right(DString *str);
@@ -304,6 +304,16 @@ DString ds_new(char *str) {
         .data = str
     };
 };
+
+char ds_peek_left(DString *str) {
+    if(str->len == 0) return '\0';
+    else return str->data[0];
+}
+
+char ds_peek_right(DString *str) {
+    if(str->len == 0) return '\0';
+    else return str->data[str->len-1];
+}
 
 void ds_trim_left(DString *str) {
     while(str->len > 0 && isspace(str->data[0])) {
