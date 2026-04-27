@@ -24,6 +24,10 @@ SOFTWARE.
 
 */
 
+// To compile the hexdump utility use the following command:
+// cc -DSUTIL_HEXDUMP -x c -o hexdump sutil.h
+
+#ifndef SUTIL_HEXDUMP
 #ifndef SUTIL_H
 #define SUTIL_H
 
@@ -648,3 +652,40 @@ DString file_readall_ds(char *path, char **out_ptr) {
 #define timer_print(name) printf("Elapsed (name): %fs\n", timer_elapsed(name))
 
 #endif // SUTIL_H
+#else
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+
+void usage() {
+    fprintf(stderr, "Usage: hexdump <filename> <variable_name>\n");
+    exit(1);
+}
+
+int main(int argc, char **argv) {
+    if(argc != 3) usage(); 
+
+    struct stat ignore;
+    if(stat(argv[1], &ignore) == -1) usage();
+
+    printf("unsigned char %s[] = {\n    ", argv[2]);
+
+    FILE *f = fopen(argv[1], "r");
+
+    char buffer[1024];
+
+    while(!feof(f)) {
+        size_t size = fread(buffer, 1, sizeof(buffer) - 4, f);
+        for(size_t i = 1; i < size + 1; i++) {
+            printf("0x%02X,", buffer[i-1]);
+            if(i % 10 == 0) printf("\n    ");
+        }
+    }
+
+    fclose(f);
+
+    printf("\n};\n");
+}
+
+#endif // SUTIL_HEXDUMP
