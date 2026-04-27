@@ -681,7 +681,7 @@ int main(int argc, char **argv) {
 
     if(!use_stdin) f = fopen(argv[2], "r");
 
-    char buffer[1024];
+    unsigned char buffer[1024];
 
     while(!feof(f)) {
         size_t size = fread(buffer, 1, sizeof(buffer) - 4, f);
