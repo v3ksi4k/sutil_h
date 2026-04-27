@@ -656,22 +656,30 @@ DString file_readall_ds(char *path, char **out_ptr) {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/stat.h>
 
 void usage() {
-    fprintf(stderr, "Usage: hexdump <filename> <variable_name>\n");
+    fprintf(stderr, "Usage: hexdump <variable_name> [filename]\n");
     exit(1);
 }
 
 int main(int argc, char **argv) {
-    if(argc != 3) usage(); 
+    FILE *f;
+    bool use_stdin = false;
 
+    if(argc == 2) {
+        use_stdin = true;
+        f = stdin;
+    } else if(argc != 3) usage();
+    
     struct stat ignore;
-    if(stat(argv[1], &ignore) == -1) usage();
 
-    printf("unsigned char %s[] = {\n    ", argv[2]);
+    if(!use_stdin && stat(argv[2], &ignore) == -1) usage();
 
-    FILE *f = fopen(argv[1], "r");
+    printf("unsigned char %s[] = {\n    ", argv[1]);
+
+    if(!use_stdin) f = fopen(argv[2], "r");
 
     char buffer[1024];
 
@@ -683,7 +691,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    fclose(f);
+    if(!use_stdin) fclose(f);
 
     printf("\n};\n");
 }
