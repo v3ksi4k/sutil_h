@@ -286,6 +286,8 @@ typedef struct {
 
 DString ds_new(char *str);
 
+char *ds_clone(DString *str);
+
 bool ds_contains(DString *str, char needle);
 
 char ds_peek_left(DString *str);
@@ -311,6 +313,16 @@ DString ds_new(char *str) {
         .len = strlen(str),
         .data = str
     };
+};
+
+char *ds_clone(DString *str) {
+    char *result;
+
+    result = malloc(str->len + 1);
+    memcpy(result, str->data, str->len);
+    result[str->len] = '\0';
+
+    return result;
 };
 
 bool ds_contains(DString *str, char needle) {
@@ -650,6 +662,7 @@ DString file_readall_ds(char *path, char **out_ptr) {
 #define timer_set(name) clock_t _sutil_clock_##name = clock()
 #define timer_elapsed(name) (double)(clock() - _sutil_clock_##name) / CLOCKS_PER_SEC
 #define timer_print(name) printf("Elapsed (name): %fs\n", timer_elapsed(name))
+
 
 #endif // SUTIL_H
 #else
