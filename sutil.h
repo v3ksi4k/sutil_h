@@ -288,6 +288,8 @@ DString ds_new(char *str);
 
 char *ds_clone(DString *str);
 
+void ds_terminate(DString *str);
+
 bool ds_contains(DString *str, char needle);
 
 char ds_peek_left(DString *str);
@@ -323,6 +325,10 @@ char *ds_clone(DString *str) {
     result[str->len] = '\0';
 
     return result;
+};
+
+void ds_terminate(DString *str) {
+    str->data[str->len] = '\0';
 };
 
 bool ds_contains(DString *str, char needle) {
