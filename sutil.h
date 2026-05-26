@@ -292,6 +292,8 @@ void ds_terminate(DString *str);
 
 bool ds_contains(DString *str, char needle);
 
+bool ds_strcmp(DString *str, char *needle);
+
 char ds_peek_left(DString *str);
 char ds_peek_right(DString *str);
 
@@ -320,7 +322,7 @@ DString ds_new(char *str) {
 char *ds_clone(DString *str) {
     char *result;
 
-    result = malloc(str->len + 1);
+    result = (char*)malloc(str->len + 1);
     memcpy(result, str->data, str->len);
     result[str->len] = '\0';
 
@@ -337,6 +339,10 @@ bool ds_contains(DString *str, char needle) {
     }
     return false;
 }
+
+bool ds_strcmp(DString *str, char *needle) {
+    return strncmp(str->data, needle, str->len);
+};
 
 char ds_peek_left(DString *str) {
     if(str->len == 0) return '\0';
