@@ -1,0 +1,9 @@
+{
+    "configurations": [
+        {
+            "name": "Default",
+            "defines": ["SUTIL_IMPLEMENTATION"]
+        }
+    ],
+    "version": 4
+}
