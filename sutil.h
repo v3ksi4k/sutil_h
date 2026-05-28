@@ -277,6 +277,8 @@ void arena_free(MemArena *arena) {
 
 #define ds_len(ds) (ds)->len
 
+#define ds_str(ds) (ds)->data
+
 #define ds_empty(ds) ((ds)->len == 0) ? 1 : 0
 
 typedef struct {
