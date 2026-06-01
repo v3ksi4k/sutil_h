@@ -43,18 +43,28 @@ SOFTWARE.
 
 
 // ----------Utility macros----------
+
+/**
+ * @brief Abort and print a debug message which contains `msg` to stderr
+ */
 #define TODO(msg) \
 do { \
     fprintf(stderr, "%s:%d:%s: TODO: "msg"\n", __FILE__, __LINE__, __func__); \
     abort(); \
 } while(0)
 
+/**
+ * @brief Abort and print a debug message to stderr
+ */
 #define UNREACHABLE() \
 do { \
     fprintf(stderr, "%s:%d:%s: reached unreachable code\n", __FILE__, __LINE__, __func__); \
     abort(); \
 } while(0)
 
+/**
+ * @brief Explicitly state that `x` is unused and get rid of the compiler warning
+ */
 #define UNUSED(x) (void)x
 
 
@@ -94,8 +104,14 @@ typedef double   f64;
 // ----------List (Dynamic Array)----------
 #define LIST_DEFAULT_INITIAL_CAPACITY 16
 
+/**
+ * @brief Define a struct called `prefix`_list which holds the fields of a list which holds data of type `type`
+ */
 #define DEFINE_LIST(type, prefix) DEFINE_LIST_NAMED(type, prefix##_list)
 
+/**
+ * @brief Define a struct called `name` which holds the fields of a list which holds data of type `type`
+ */
 #define DEFINE_LIST_NAMED(type, name) \
 typedef struct { \
     size_t capacity; \
@@ -103,12 +119,33 @@ typedef struct { \
     type *items; \
 } name;
 
+/**
+ * @brief Create a new list of type `name` which holds items of type `type` with an explicit initial capacity `initial_capacity`
+ * @note The resulting list must be freed using `list_free`
+ */
 #define list_new_named_ic(type, name, initial_capacity) (name){.capacity = initial_capacity, .item_count = 0, .items = (type*)malloc(sizeof(type)*initial_capacity)}
+
+/**
+ * @brief Create a new list of type `name` which holds items of type `type`
+ * @note The resulting list must be freed using `list_free`
+ */
 #define list_new_named(type, name) list_new_named_ic(type, name, LIST_DEFAULT_INITIAL_CAPACITY)
 
+/**
+ * @brief Create a new list of type `prefix`_list which holds items of type `type` with an explicit initial capacity `initial_capacity`
+ * @note The resulting list must be freed using `list_free`
+ */
 #define list_new_ic(type, prefix, initial_capacity) list_new_named_ic(type, prefix##_list, initial_capacity)
+
+/**
+ * @brief Create a new list of type `prefix`_list which holds items of type `type`
+ * @note The resulting list must be freed using `list_free`
+ */
 #define list_new(type, prefix) list_new_named_ic(type, prefix##_list, LIST_DEFAULT_INITIAL_CAPACITY)
 
+/**
+ * @brief Free the list `list`
+ */
 #define list_free(list) \
 do { \
     (list)->capacity = 0; \
@@ -119,6 +156,9 @@ do { \
     } \
 } while(0)
 
+/**
+ * @brief Free `list` and reinitialize it as an empty list
+ */
 #define list_reset(list, capacity) \
 do { \
     (list)->capacity = capacity; \
@@ -129,16 +169,38 @@ do { \
     } \
 } while(0)
 
+/**
+ * @brief Set the item count of `list` to 0 without freeing its contents
+ * @note This is useful if you want to reinitialize the list without changing its current capacity
+ */
 #define list_clear(list) (list)->item_count = 0
 
+/**
+ * @brief Return the amount of items which `list` holds
+ */
 #define list_len(list) (list)->item_count
-#define list_capacity(list) (list)->capacity
-#define list_size_cap(list) (list)->capacity * sizeof(*((list)->items))
-#define list_size_count(list) (list)->item_count * sizeof(*((list)->items))
 
-// #define list_foreach(list, name) for(typeof((list)->items) (name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
+/**
+ * @brief Return the current capacity of `list`
+ */
+#define list_capacity(list) (list)->capacity
+
+/**
+ * @brief Return the amount of bytes which were used to allocate the space for items of `list`
+ */
+#define list_size_cap(list) (list)->capacity * sizeof(*((list)->items))
+
+/**
+ * @brief Iterate through all items held by `list` in a for loop which intitializes a variable `name` and sets it to the current item 
+ * @param name The name of a variable which will be set to the current item by the for loop
+ */
 #define list_foreach(list, type, name) for(type *(name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
 
+/**
+ * @brief Call the function `function` for each item of `list`, pass the item as the first argument and `...` as the remaining arguments
+ * @param function The function which will be called in a format `function(list_item, ...)`
+ * @param ... Remaining arguments of the function `function`
+ */
 #define list_map(list, type, function, ...) \
 do { \
     list_foreach(list, type, _sutil_item) { \
@@ -146,6 +208,9 @@ do { \
     } \
 } while(0)
 
+/**
+ * @brief Push `item` to the top of `list`
+ */
 #define list_push(list, item) \
 do { \
     (list)->item_count++; \
@@ -159,6 +224,9 @@ do { \
     (list)->items[(list)->item_count-1] = item; \
 } while(0)
 
+/**
+ * @brief Push an array of items (`array`) to the top of `list`
+ */
 #define list_push_array(list, array) \
 do { \
     for(size_t i = 0; i < sizeof(array)/sizeof(array[0]); i++) { \
@@ -166,14 +234,56 @@ do { \
     } \
 } while(0)
 
+/**
+ * @brief Get the `n`th item held by `list`
+ * @warning This function is unsafe. The safe version of this function is `list_get_s`
+ */
 #define list_get(list, n) (list)->items[n]
+
+/**
+ * @brief Pop an item from the top of `list`
+ * @warning This function is unsafe. The safe version of this function is `list_pop_s`
+ */
 #define list_pop(list) (list)->item_count--
+
+/**
+ * @brief Pop `n` items from the top of `list`
+ * @warning This function is unsafe. The safe version of this function is `list_pop_n_s`
+ */
 #define list_pop_n(list, n) (list)->item_count-=n
+
+/**
+ * @brief Return the last item held by `list`
+ * @warning This function is unsafe. The safe version of this function is `list_end_s`
+ */
 #define list_end(list) (list)->items[(list)->item_count-1]
 
+/**
+ * @brief Set `result` to the `n`th item held by list. Return a boolean indicating whether the operation succeeded
+ * @result `true` if the operation succeeded and `result` was set or `false` otherwise
+ * @note This is a safe version of `list_get`
+ */
 #define list_get_s(list, n, result) ((n < (list)->item_count) ? ((result) = (list)->items[n], false) : true)
+
+/**
+ * @brief Pop an item from the top of `list`. Return a boolean indicating whether the operation succeeded
+ * @result `false` if the `list` was already empty or `true` otherwise
+ * @note This is a safe version of `list_pop`
+ */
 #define list_pop_s(list) (((list)->item_count > 0) ? ((list)->item_count--, false) : true)
+
+/**
+ * @brief Pop `n` items from the top of `list`. Return a boolean indicating whether the operation succeeded
+ * @result `false` if the size of `list` was lower than `n` or `true` otherwise
+ * @note This is a safe version of `list_pop_n`
+ */
 #define list_pop_n_s(list, n) (((list)->item_count > n-1) ? ((list)->item_count-=n, false) : true)
+
+/**
+ * @brief Set `result` to the last item held by list. Return a boolean indicating whether the operation succeeded
+ * @result `true` if the operation succeeded and `result` was set or `false` otherwise
+ * @note This is a safe version of `list_end`
+ */
 #define list_end_s(list, result) (((list)->item_count > 0) ? ((result) = (list)->items[(list)->item_count-1], false) : true)
 
 
@@ -197,13 +307,35 @@ typedef struct {
 
 MemBlock *mem_block_new(size_t capacity);
 
+/**
+ * @brief Create a new `MemArena` structure and explicitly set the block size to `block_size`
+ */
 MemArena arena_new_bs(size_t block_size);
+
+/**
+ * @brief Allocate `size` bytes in `arena` and return a pointer to it
+ * @note The memory then can be freed using `arena_free`
+ */
 void *arena_alloc(MemArena *arena, size_t size);
+
+/**
+ * @brief Free all memory allocated in `arena` which was allocated using functions from the `arena_alloc` family
+ */
 void arena_free(MemArena *arena);
 
+/**
+ * @brief Allocate enough memory in `arena` to hold 1 element of `type` and return a pointer to it
+ */
 #define arena_alloc_type(arena, type) (type*)arena_alloc(arena, sizeof(type))
+
+/**
+ * @brief Allocate enough memory in `arena` to hold an array of `type` with a size of `size` and return a pointer to it
+ */
 #define arena_alloc_array(arena, type, size) (type*)arena_alloc(arena, sizeof(type)*size)
 
+/**
+ * @brief Create a new `MemArena` structure with a default block size
+ */
 #define arena_new() arena_new_bs(ARENA_DEFAULT_BLOCK_SIZE)
 
 #ifdef SUTIL_IMPLEMENTATION
@@ -270,15 +402,38 @@ void arena_free(MemArena *arena) {
 
 
 // ----------Dynamic String----------
+
+/**
+ * @brief The format parameter which should be used when trying to print dynamic strings with functions from the `printf` family
+ * @note Remember to also provide `DS_ARGS`
+ */
 #define DS_FMT "%.*s"
+
+/**
+ * @brief The argument parameter which should be used when trying to print dynamic strings with functions from the `printf` family
+ * @note Remember to use `DS_FMT`
+ */
 #define DS_ARGS(ds) ((ds)->len > INT_MAX) ? INT_MAX : (int)((ds)->len), (ds)->data
 
+/**
+ * @brief Iterate through all characters of `ds` in a for loop which initializes a variable `name` and sets it to the current character
+ * @param name The name of a variable which will be set to the current character by the for loop
+ */
 #define ds_foreach(ds, name) for(char *(name) = (ds)->data; (name) < (ds)->data + (ds)->len; (name)++)
 
+/**
+ * @brief Returns the length of `ds`
+ */
 #define ds_len(ds) (ds)->len
 
+/**
+ * @brief Returns the `char*` held by `ds`
+ */
 #define ds_str(ds) (ds)->data
 
+/**
+ * @brief Returns 1 if `ds` is empty or 0 if it isn't
+ */
 #define ds_empty(ds) ((ds)->len == 0) ? 1 : 0
 
 typedef struct {
@@ -286,30 +441,105 @@ typedef struct {
     char *data;
 } DString;
 
+/**
+ * @brief Creates a new dynamic string without cloning the string pointed to by `str`
+ * @param str Pointer to a null-terminated string
+ * @result A new `DString` structure initialized with the provided pointer
+ */
 DString ds_new(char *str);
 
-char *ds_clone(DString *str);
+/**
+ * @brief Clone the string held by a dynamic string `str` and return a pointer to it
+ * @result Pointer to a clone of a null-terminated string held by `str`
+ * @note The result must be freed
+ */
+char *ds_clone_str(DString *str);
 
+/**
+ * @brief Clone the dynamic string `str` and return the clone
+ * @note The returned `DString` must be freed using `ds_clone_free`
+ */
+DString ds_clone_ds(DString *str);
+
+/**
+ * @brief Clone the dynamic string `str` which is a result of calling `ds_clone_ds`
+ * @warning Only strings which are a result of `ds_clone_ds` must be passed to this function
+ */
+void ds_clone_free(DString *str);
+
+/**
+ * @brief Put a null-terminator at the end of a string held by `str`
+ * @warning This will modify the original string passed into `ds_new`
+ */
 void ds_terminate(DString *str);
 
+/**
+ * @brief Checks whether the dynamic string `str` contains `needle`
+ */
 bool ds_contains(DString *str, char needle);
 
+/**
+ * @brief Checks whether the dynamic string `str` is equal to `needle`
+ */
 bool ds_strcmp(DString *str, char *needle);
 
+/**
+ * @brief Return a char from the left side of `str`, or the first char of `str` on error
+ */
 char ds_peek_left(DString *str);
+
+/**
+ * @brief Return a char from the right side of `str`, or the last char of `str` on error
+ */
 char ds_peek_right(DString *str);
 
+/**
+ * @brief Trim all whitespaces from the left side of `str`
+ */
 void ds_trim_left(DString *str);
+
+/**
+ * @brief Trim all whitespaces from the right side of `str`
+ */
 void ds_trim_right(DString *str);
+
+/**
+ * @brief Trim all whitespaces from both sides of `str`
+ */
 void ds_trim(DString *str);
 
+/**
+ * @brief Pop a char from the left side of `str`
+ */
 void ds_chop_left(DString *str);
+
+/**
+ * @brief Pop a char from the right side of `str`
+ */
 void ds_chop_right(DString *str);
 
+/**
+ * @brief Pop chars from the left side of `str` until `delimeter` is encountered
+ * @result A `DString` pointing to the chopped part of `str`
+ */
 DString ds_chop_left_until(DString *str, char delimeter);
+
+/**
+ * @brief Pop chars from the right side of `str` until `delimeter` is encountered
+ * @result A `DString` pointing to the chopped part of `str`
+ */
 DString ds_chop_right_until(DString *str, char delimeter);
 
+/**
+ * @brief Pop chars from the left side of `str` until a whitespace is encountered
+ * @result A `DString` pointing to the chopped part of `str`
+ */
 DString ds_chop_word_left(DString *str);
+
+/**
+ * @brief Pop chars from the right side of `str` until a whitespace is encountered
+ * @result A `DString` pointing to the chopped part of `str`
+ */
 DString ds_chop_word_right(DString *str);
 
 #ifdef SUTIL_IMPLEMENTATION
@@ -321,7 +551,7 @@ DString ds_new(char *str) {
     };
 };
 
-char *ds_clone(DString *str) {
+char *ds_clone_str(DString *str) {
     char *result;
 
     result = (char*)malloc(str->len + 1);
@@ -330,6 +560,25 @@ char *ds_clone(DString *str) {
 
     return result;
 };
+
+DString ds_clone_ds(DString *str) {
+    DString result;
+    char *data;
+    size_t len = str->len;
+
+    data = (char*)malloc(str->len + 1);
+    memcpy(data, str->data, str->len);
+    data[str->len] = '\0';
+
+    result = (DString){ .data = data, .len = len };
+
+    return result;
+};
+
+void ds_clone_free(DString *str) {
+    free(str->data);
+    str->len = 0;
+}
 
 void ds_terminate(DString *str) {
     str->data[str->len] = '\0';
@@ -461,6 +710,13 @@ DString ds_chop_word_right(DString *str) {
 
 
 // ----------String Builder----------
+
+/**
+ * @brief Constructs a null-terminated string out of strings contained by `sb` and returns a poniter to it
+ * @result Pointer to a null-terminated string built using `sb`
+ * @note The result must be freed
+ * @note This is an alias of `sb_string`
+ */
 #define SB(sb) sb_string(sb)
 
 typedef struct StringChunk StringChunk;
@@ -478,16 +734,42 @@ typedef struct {
 } SBuilder;
 
 StringChunk *string_chunk_new(char *data, size_t data_len);
+
+/**
+ * @brief Create a new string builder and return it
+ * @result A newly created SBuilder instance
+ * @note The result must be freed with `sb_free`
+ */
 SBuilder sb_new();
+
+/**
+ * @brief Free the contents of `sb`. This will free of the strings that it accumulated
+ */
 void sb_free(SBuilder *sb);
 
+/**
+ * @brief Append the string `str` to `sb` by cloning it
+ */
 void sb_append(SBuilder *sb, char *str);
+
+/**
+ * @brief Append a printf-formatted string to `sb`
+ * @param format Format string which fill be passed to printf
+ * @param ... Variadic arguments which will be passed to pritnf
+ */
 void sb_appendf(SBuilder *sb, char *format, ...);
 
+/**
+ * @brief Constructs a null-terminated string out of strings contained by `sb` and returns a poniter to it
+ * @result Pointer to a null-terminated string built using `sb`
+ * @note The result must be freed
+ * @note This function has a shorter alias `SB`
+ */
 char *sb_string(SBuilder *sb);
 
-#define sb_print(sb) printf("%s\n", sb_string(sb))
-
+/**
+ * @result The total size of all strings accumulated in `sb` in bytes
+ */
 #define sb_size(sb) (sb)->size
 
 #ifdef SUTIL_IMPLEMENTATION
@@ -601,12 +883,35 @@ typedef struct {
     char data[64];
 } ShortString;
 
+/**
+ * @brief Represent the short string structure as a null-terminated string
+ * @result Pointer to a null-terminated string with the contents of `ss`
+ * @note This function can be used to eaisly print short strings
+ * @warning The result must NOT be freed
+ */
 #define SS(ss) ss.data
 
+/**
+ * @brief Initialize a new ShortString and set its contents to `str`
+ * @param str A null-terminated string which will be truncated to 64 bytes (including the null-terminator)
+ */
 ShortString ss_new(char *str);
+
+/**
+ * @brief Intialize a new ShortString and set its contents to a printf-formatted string
+ * @param format Format string which fill be passed to printf
+ * @param ... Variadic arguments which will be passed to pritnf
+ */
 ShortString ss_new_f(char *format, ...);
 
+/**
+ * @brief Print `ss` into `stdout` with a trailing newline
+ */
 #define ssprint(ss) printf("%s\n", SS(ss))
+
+/**
+ * @brief Print `ss` into `file` with a trailing newline
+ */
 #define ssfprint(ss, file) fprintf(file, "%s\n", SS(ss))
 
 #ifdef SUTIL_IMPLEMENTATION
@@ -635,7 +940,22 @@ ShortString ss_new_f(char *format, ...) {
 
 
 // ----------File Utilities----------
+
+/**
+ * @brief Read an entire file from `path`, return its contents as a null-terminates string to `out_ptr` and their size
+ * @param path A pre-validated path to a file 
+ * @param out_ptr A pointer which will point to a null-terminated string containing the contents of the file
+ * @result Size of the contents of the file in bytes
+ * @note If the size of the contents is not needed, use `file_readall`
+ */
 size_t file_readall_sz(char *path, char **out_ptr);
+
+/**
+ * @brief Read an entire file from `path` and return its contents as a null-terminated string
+ * @param path A pre-validated path to a file 
+ * @result Pointer to a null-terminated string with the contents of the file
+ * @note If the size of the contents is needed, use `file_readall`
+ */
 char *file_readall(char *path);
 
 #ifdef SUTIL_IMPLEMENTATION
