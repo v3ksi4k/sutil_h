@@ -439,14 +439,30 @@ void arena_free(MemArena *arena) {
 typedef struct {
     size_t len;
     char *data;
+    char *orig_ptr;
 } DString;
+
+/**
+ * @brief Creates a new dynamic string with contents `str`
+ * @param str Pointer to a null-terminated string
+ * @note The result must be freed using `ds_free`
+ */
+DString ds_new(char *str);
+
+/**
+ * @brief Creates a new dynamic string containing a printf-formatted string
+ * @param format Format string which will be passed to printf
+ * @param ... Variadic arguments which will be passed to printf
+ * @note The result must be freed using `ds_free`
+ */
+DString ds_new_fmt(char *format, ...);
 
 /**
  * @brief Creates a new dynamic string without cloning the string pointed to by `str`
  * @param str Pointer to a null-terminated string
- * @result A new `DString` structure initialized with the provided pointer
+ * @warning Contrary to ds_new and ds_new_fmt you musn't call ds_free on the result
  */
-DString ds_new(char *str);
+DString ds_new_wrap(char *str);
 
 /**
  * @brief Clone the string held by a dynamic string `str` and return a pointer to it
@@ -457,15 +473,15 @@ char *ds_clone_str(DString *str);
 
 /**
  * @brief Clone the dynamic string `str` and return the clone
- * @note The returned `DString` must be freed using `ds_clone_free`
+ * @note The returned `DString` must be freed using `ds_free`
  */
 DString ds_clone_ds(DString *str);
 
 /**
- * @brief Clone the dynamic string `str` which is a result of calling `ds_clone_ds`
- * @warning Only strings which are a result of `ds_clone_ds` must be passed to this function
+ * @brief Free the dynamic string `str`
+ * @warning This function musn't be called on dynamic strings which are a result of `ds_new_wrap`
  */
-void ds_clone_free(DString *str);
+void ds_free(DString *str);
 
 /**
  * @brief Put a null-terminator at the end of a string held by `str`
@@ -519,35 +535,70 @@ void ds_chop_left(DString *str);
 void ds_chop_right(DString *str);
 
 /**
- * @brief Pop chars from the left side of `str` until `delimeter` is encountered
+ * @brief Pop chars from the left side of `str` until `delimeter` is encountered. Create a child `DString` with the chopped contents
  * @result A `DString` pointing to the chopped part of `str`
+ * @warning The resulting `DString` musn't be freed as it will be freed with its parent
  */
 DString ds_chop_left_until(DString *str, char delimeter);
 
 /**
- * @brief Pop chars from the right side of `str` until `delimeter` is encountered
+ * @brief Pop chars from the right side of `str` until `delimeter` is encountered. Create a child `DString` with the chopped contents
  * @result A `DString` pointing to the chopped part of `str`
+ * @warning The resulting `DString` musn't be freed as it will be freed with its parent
  */
 DString ds_chop_right_until(DString *str, char delimeter);
 
 /**
- * @brief Pop chars from the left side of `str` until a whitespace is encountered
+ * @brief Pop chars from the left side of `str` until a whitespace character is encountered. Create a child `DString` with the chopped contents
  * @result A `DString` pointing to the chopped part of `str`
+ * @warning The resulting `DString` musn't be freed as it will be freed with its parent
  */
 DString ds_chop_word_left(DString *str);
 
 /**
- * @brief Pop chars from the right side of `str` until a whitespace is encountered
+ * @brief Pop chars from the right side of `str` until a whitespace character is encountered. Create a child `DString` with the chopped contents
  * @result A `DString` pointing to the chopped part of `str`
+ * @warning The resulting `DString` musn't be freed as it will be freed with its parent
  */
 DString ds_chop_word_right(DString *str);
 
 #ifdef SUTIL_IMPLEMENTATION
 
 DString ds_new(char *str) {
+    size_t len = strlen(str);
+    char *data = (char*)malloc(len + 1);
+    strncpy(data, str, len + 1);
+
+    return (DString) {
+        .len = len,
+        .data = data,
+        .orig_ptr = data
+    };
+}
+
+DString ds_new_fmt(char *format, ...) {
+    va_list args;
+    va_list args_tmp;
+
+    va_copy(args_tmp, args);
+
+    size_t len = vsnprintf(NULL, 0, format, args_tmp);
+    char *data = (char*)malloc(len + 1);
+
+    vsnprintf(data, len + 1, format, args);
+
+    return (DString) {
+        .len = len,
+        .data = data,
+        .orig_ptr = data
+    };
+}
+
+DString ds_new_wrap(char *str) {
     return (DString) {
         .len = strlen(str),
-        .data = str
+        .data = str,
+        .orig_ptr = str
     };
 };
 
@@ -570,13 +621,13 @@ DString ds_clone_ds(DString *str) {
     memcpy(data, str->data, str->len);
     data[str->len] = '\0';
 
-    result = (DString){ .data = data, .len = len };
+    result = (DString){ .data = data, .orig_ptr = data, .len = len };
 
     return result;
 };
 
-void ds_clone_free(DString *str) {
-    free(str->data);
+void ds_free(DString *str) {
+    free(str->orig_ptr);
     str->len = 0;
 }
 
@@ -986,7 +1037,7 @@ char *file_readall(char *path) {
 
 DString file_readall_ds(char *path, char **out_ptr) {
     *out_ptr = file_readall(path);
-    return ds_new(*out_ptr);
+    return ds_new_wrap(*out_ptr);
 }
 
 #endif // SUTIL_IMPLEMENTATION
