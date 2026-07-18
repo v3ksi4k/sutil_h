@@ -760,6 +760,39 @@ DString ds_chop_word_right(DString *str) {
 #endif // SUTIL_IMPLEMENTATION
 
 
+// ----------String Utilities----------
+
+/**
+ * @brief Clones a string by allocating space on the heap and copying it
+ * @param str A null-terminated string
+ * @result A pointer to the null-terminated cloned string
+ * @note The result must be freed
+ */
+char *cstr_clone(char *str);
+
+/**
+ * @brief Returns the length of a printf-formatted string after evaluation
+ * @param format Format string which fill be passed to printf
+ * @param ... Variadic arguments which will be passed to pritnf
+ * @note The returned len doesn't include the null-terminator
+ */
+#define printf_fmt_len(format, ...) snprintf(NULL, 0, format, __VA_ARGS__) 
+
+#ifdef SUTIL_IMPLEMENTATION
+
+char *cstr_clone(char *str) {
+    char *result;
+    size_t len = strlen(str) + 1;
+
+    result = malloc(len);
+    memcpy(result, str, len);
+
+    return result;
+};
+
+#endif // SUTIL_IMPLEMENTATION
+
+
 // ----------String Builder----------
 
 /**
