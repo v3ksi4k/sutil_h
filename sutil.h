@@ -37,6 +37,7 @@ SOFTWARE.
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <errno.h>
 #include <limits.h>
 #include <ctype.h>
 #include <time.h>
@@ -69,6 +70,7 @@ do { \
 
 
 // ----------Numeric types----------
+
 typedef int8_t   i8;
 typedef int16_t  i16;
 typedef int32_t  i32;
@@ -84,6 +86,7 @@ typedef double   f64;
 
 
 // ----------Units and memory----------
+
 #define KB(n) (1000UL * (n))
 #define KiB(n) ((n) << 10)
 #define MB(n) (1000000UL * (n))
@@ -102,6 +105,7 @@ typedef double   f64;
 
 
 // ----------List (Dynamic Array)----------
+
 #define LIST_DEFAULT_INITIAL_CAPACITY 16
 
 /**
@@ -288,6 +292,7 @@ do { \
 
 
 // ----------Memory Arena----------
+
 #define ARENA_DEFAULT_BLOCK_SIZE 1024
 
 typedef struct MemBlock MemBlock;
@@ -963,6 +968,7 @@ void sb_free(SBuilder *sb) {
 
 
 // ----------Short String----------
+
 typedef struct {
     char data[64];
 } ShortString;
@@ -1076,7 +1082,287 @@ DString file_readall_ds(char *path, char **out_ptr) {
 #endif // SUTIL_IMPLEMENTATION
 
 
+// ----------SArg (Argument parsing)----------
+
+typedef enum {
+    SARG_BOOL,
+    SARG_STRING,
+    SARG_INT,
+    SARG_FLOAT
+} SArgFlagType;
+
+typedef struct {
+    char *name;
+    char *value_name;
+    char *description;
+    SArgFlagType type;
+    void *storage;
+    size_t storage_size;
+} SArgFlag;
+
+DEFINE_LIST_NAMED(SArgFlag, SArgFlags);
+
+typedef struct {
+    int *orig_argc;
+    char ***orig_argv;
+    int argc;
+    char **argv;
+    SArgFlags flags;
+    char *name;
+    char *description;
+    char *version;
+    char error_buffer[512];
+} SArgContext;
+
+#define sarg_context_has_error(context) context->error_buffer[0] != '\0' ? true : false
+
+#define sarg_context_error(context) context->error_buffer
+
+#define sarg_flag_bool(context, name, value_name, description, storage) sarg_flag(context, name, value_name, description, SARG_BOOL, (bool*)storage, sizeof(bool));
+
+#define sarg_flag_int(context, name, value_name, description, storage) sarg_flag(context, name, value_name, description, SARG_INT, (int*)storage, sizeof(int));
+
+#define sarg_flag_float(context, name, value_name, description, storage) sarg_flag(context, name, value_name, description, SARG_FLOAT, (float*)storage, sizeof(float));
+
+#define sarg_flag_string(context, name, value_name, description, storage, storage_size) sarg_flag(context, name, value_name, description, SARG_STRING, (char*)storage, storage_size);
+
+SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *description, char *version);
+
+void sarg_context_free(SArgContext *context);
+
+void sarg_parse(SArgContext *context);
+
+void sarg_flag(SArgContext *context, char *name, char *value_name, char *description, SArgFlagType type, void *storage, size_t storage_size);
+
+void sarg_print_help(SArgContext *context);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+#define _sarg_parse_error_fmt(type) "Failed to parse type '%s' for flag '%s'", #type, flag->name
+#define _sarg_no_value_error_fmt(type) "Missing required value of type '%s' for flag '%s'", #type, flag->name
+#define _sarg_next_flag_error_fmt() "Next flag provided instead of value required for flag '%s'", flag->name
+#define _sarg_overflow_error_fmt(type) "Value of the '%s' flag overflows the '%s' type", flag->name, #type
+
+#define _sarg_error_return_internal(context, return_value, ...) \
+    snprintf(context->error_buffer, sizeof(context->error_buffer), __VA_ARGS__); \
+    return return_value;
+
+#define _sarg_shift_internal(context) context->argc--; context->argv++;
+#define _sarg_unshift_internal(context) context->argc++; context->argv--;
+
+float _sarg_parse_float_internal(SArgContext *context, SArgFlag *flag) {
+    if(context->argc <= 1) { 
+        _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt(float));
+    }
+
+    _sarg_shift_internal(context);
+
+    char *next = context->argv[0];
+
+    if(*next == '-') {
+        _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt());
+    } 
+
+    size_t next_len = strlen(next);
+
+    char *endptr;
+    float value = strtof(next, &endptr);
+
+    if((size_t)(endptr - next) != next_len) {
+         _sarg_error_return_internal(context, 0.0f, _sarg_parse_error_fmt(float));
+    } else if(errno == ERANGE) {
+         _sarg_error_return_internal(context, 0.0f, _sarg_overflow_error_fmt(float));
+    } else return value;
+}
+
+int _sarg_parse_int_internal(SArgContext *context, SArgFlag *flag) {
+    if(context->argc <= 1) { 
+        _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt(int));
+    }
+
+    _sarg_shift_internal(context);
+
+    char *next = context->argv[0];
+
+    if(*next == '-') {
+        _sarg_error_return_internal(context, 0.0f, _sarg_next_flag_error_fmt());
+    } 
+
+    size_t next_len = strlen(next);
+
+    char *endptr;
+    long value = strtol(next, &endptr, 10);
+
+    if((size_t)(endptr - next) != next_len) {
+         _sarg_error_return_internal(context, 0.0f, _sarg_parse_error_fmt(int));
+    } else if(errno == ERANGE || value > INT_MAX || value < INT_MIN) {
+         _sarg_error_return_internal(context, 0.0f, _sarg_overflow_error_fmt(int));
+    } else return (int)value;
+}
+
+bool _sarg_parse_bool_internal(SArgContext *context) {
+    // If this is the last argument. Consider the flag as set
+    if(context->argc <= 1) return true;
+
+    _sarg_shift_internal(context);
+
+    char *next = context->argv[0];
+    size_t next_len = strlen(next);
+
+    if(next_len == 1) {
+        if(*next == '1') return true;
+        else if(*next == '0') return false;
+    } else {
+        if(!strcmp(next, "true")) return true;
+        else if(!strcmp(next, "false")) return false;
+    }
+
+    // If the next argument is not a boolean value - push it back
+    _sarg_unshift_internal(context);
+
+    return true;
+}
+
+char *_sarg_parse_string_internal(SArgContext *context, SArgFlag *flag) {
+    if(context->argc <= 1) {
+        _sarg_error_return_internal(context, NULL, _sarg_no_value_error_fmt(string));
+    }
+
+    _sarg_shift_internal(context);
+
+    char *next = context->argv[0];
+
+    if(*next == '-') {
+        _sarg_error_return_internal(context, NULL, _sarg_next_flag_error_fmt());
+    }
+
+    else return next;
+}
+
+SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *description, char *version) {
+    SArgContext *result = malloc(sizeof(SArgContext));
+
+    result->orig_argc = argc;
+    result->orig_argv = argv;
+    result->argc = *argc;
+    result->argv = *argv;
+    result->flags = list_new_named(SArgFlag, SArgFlags);
+    result->name = name;
+    result->description = description;
+    result->version = version;
+    result->error_buffer[0] = '\0';
+    
+    return result;
+}
+
+void sarg_context_free(SArgContext *context) {
+    list_free(&context->flags);
+    free(context);
+}
+
+void sarg_parse(SArgContext *context) {
+    _sarg_shift_internal(context);
+
+    while(context->argc > 0) {
+        char *arg = context->argv[0];
+        size_t arg_len = strlen(arg);
+
+        if(arg_len < 2 || arg[0] != '-') break;
+        else {
+            arg++;
+            arg_len--;
+        }
+
+        if(!strcmp(arg, "help")) {
+            sarg_print_help(context);
+            exit(0);
+        }
+
+        if(!strcmp(arg, "version")) {
+            printf("%s %s\n", context->name, context->version);
+            exit(0);
+        }
+
+        bool flag_found = false;
+        list_foreach(&context->flags, SArgFlag, flag) {
+            if(!strcmp(arg, flag->name)) {
+                flag_found = true;
+                switch(flag->type) {
+                    case SARG_BOOL:
+                        *((bool*)flag->storage) = _sarg_parse_bool_internal(context);
+                    break;
+                    case SARG_STRING:
+                        memcpy(flag->storage, _sarg_parse_string_internal(context, flag), flag->storage_size-1);
+                        ((char*)flag->storage)[flag->storage_size-1] = '\0';
+                    break;
+                    case SARG_FLOAT:
+                        *((float*)flag->storage) = _sarg_parse_float_internal(context, flag);
+                    break;
+                    case SARG_INT:
+                        *((int*)flag->storage) = _sarg_parse_int_internal(context, flag);
+                    break;
+                    default:
+                        UNREACHABLE();
+                    break;
+                }
+                break;
+            }
+        }
+
+        if(context->error_buffer[0] != '\0') {
+            return;
+        }
+
+        // TODO: Implement better error handling
+        if(!flag_found) {
+            _sarg_error_return_internal(context, (void)0, "Unknown flag '%s'", arg);
+        };
+
+        _sarg_shift_internal(context);
+    }
+
+    *context->orig_argc = context->argc;
+    *context->orig_argv = context->argv;
+}
+
+void sarg_flag(SArgContext *context, char *name, char *value_name, char *description, SArgFlagType type, void *storage, size_t storage_size) {
+    SArgFlag flag;
+
+    flag.type = type;
+    flag.name = name; 
+    flag.value_name = value_name; 
+    flag.description = description; 
+    flag.storage = storage;
+    flag.storage_size = storage_size;
+
+    list_push(&context->flags, flag);
+}
+
+void sarg_print_help(SArgContext *context) {
+    printf("Usage: %s [arguments]\n", *context->orig_argv[0]);
+
+    if(context->description != NULL) printf("%s\n", context->description);
+
+    printf("\n");
+
+    printf("Available flags:\n");
+
+    list_foreach(&context->flags, SArgFlag, flag) {
+        printf("    -%s", flag->name);
+        if(flag->value_name != NULL) printf(" <%s>", flag->value_name);
+        if(flag->description != NULL) printf("  %s", flag->description);
+        printf("\n");
+    };
+
+    printf("    -help  print this help message and exit\n");
+    printf("    -version  display program version and exit\n");
+}
+
+#endif // SUTIL_IMPLEMENTATION
+
+
 // ----------Timer----------
+
 #define timer_set(name) clock_t _sutil_clock_##name = clock()
 #define timer_elapsed(name) (double)(clock() - _sutil_clock_##name) / CLOCKS_PER_SEC
 #define timer_print(name) printf("Elapsed (name): %fs\n", timer_elapsed(name))
