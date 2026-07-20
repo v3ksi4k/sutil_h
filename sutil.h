@@ -1111,6 +1111,7 @@ typedef struct {
     char *name;
     char *description;
     char *version;
+    SBuilder extra_help;
     char error_buffer[512];
 } SArgContext;
 
@@ -1126,6 +1127,10 @@ typedef struct {
 
 #define sarg_flag_string(context, name, value_name, description, storage, storage_size) sarg_flag(context, name, value_name, description, SARG_STRING, (char*)storage, storage_size);
 
+#define sarg_help_append(context, str) sb_append(&context->extra_help, str);
+
+#define sarg_help_appendf(context, format, ...) sb_appendf(&context->extra_help, format, __VA_ARGS__) 
+
 SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *description, char *version);
 
 void sarg_context_free(SArgContext *context);
@@ -1134,7 +1139,9 @@ void sarg_parse(SArgContext *context);
 
 void sarg_flag(SArgContext *context, char *name, char *value_name, char *description, SArgFlagType type, void *storage, size_t storage_size);
 
-void sarg_print_help(SArgContext *context);
+void sarg_help_print(SArgContext *context);
+
+void sarg_version_print(SArgContext *context);
 
 #ifdef SUTIL_IMPLEMENTATION
 
@@ -1250,6 +1257,7 @@ SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *descrip
     result->name = name;
     result->description = description;
     result->version = version;
+    result->extra_help = sb_new();
     result->error_buffer[0] = '\0';
     
     return result;
@@ -1257,6 +1265,7 @@ SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *descrip
 
 void sarg_context_free(SArgContext *context) {
     list_free(&context->flags);
+    sb_free(&context->extra_help);
     free(context);
 }
 
@@ -1274,12 +1283,12 @@ void sarg_parse(SArgContext *context) {
         }
 
         if(!strcmp(arg, "help")) {
-            sarg_print_help(context);
+            sarg_help_print(context);
             exit(0);
         }
 
         if(!strcmp(arg, "version")) {
-            printf("%s %s\n", context->name, context->version);
+            sarg_version_print(context);
             exit(0);
         }
 
@@ -1338,7 +1347,7 @@ void sarg_flag(SArgContext *context, char *name, char *value_name, char *descrip
     list_push(&context->flags, flag);
 }
 
-void sarg_print_help(SArgContext *context) {
+void sarg_help_print(SArgContext *context) {
     printf("Usage: %s [arguments]\n", *context->orig_argv[0]);
 
     if(context->description != NULL) printf("%s\n", context->description);
@@ -1356,6 +1365,16 @@ void sarg_print_help(SArgContext *context) {
 
     printf("    -help  print this help message and exit\n");
     printf("    -version  display program version and exit\n");
+
+    if(sb_size(&context->extra_help) != 0) {
+        char *extra_help = SB(&context->extra_help);
+        free(extra_help);
+    }
+}
+
+void sarg_version_print(SArgContext *context) {
+    if(context->version != NULL) printf("%s %s\n", context->name, context->version);
+    else printf("%s (version unspecified)", context->name);
 }
 
 #endif // SUTIL_IMPLEMENTATION
