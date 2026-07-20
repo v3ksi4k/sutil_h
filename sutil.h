@@ -1371,7 +1371,7 @@ void sarg_help_print(SArgContext *context) {
 
     if(sb_size(&context->extra_help) != 0) {
         char *extra_help = SB(&context->extra_help);
-        printf("\n%s\n", extra_help);
+        printf("\n%s", extra_help);
         free(extra_help);
     }
 }
