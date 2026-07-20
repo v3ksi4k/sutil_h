@@ -1371,13 +1371,14 @@ void sarg_help_print(SArgContext *context) {
 
     if(sb_size(&context->extra_help) != 0) {
         char *extra_help = SB(&context->extra_help);
+        printf("\n%s\n", extra_help);
         free(extra_help);
     }
 }
 
 void sarg_version_print(SArgContext *context) {
     if(context->version != NULL) printf("%s %s\n", context->name, context->version);
-    else printf("%s (version unspecified)", context->name);
+    else printf("%s (version unspecified)\n", context->name);
 }
 
 #endif // SUTIL_IMPLEMENTATION
