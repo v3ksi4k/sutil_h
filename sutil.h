@@ -24,6 +24,9 @@ SOFTWARE.
 
 */
 
+// To download and add a latest version of sutil.h to your project, execute:
+// wget https://raw.githubusercontent.com/v3ksi4k/sutil_h/refs/heads/master/sutil.h
+
 // To compile the hexdump utility use the following command:
 // cc -DSUTIL_HEXDUMP -x c -o hexdump sutil.h
 
