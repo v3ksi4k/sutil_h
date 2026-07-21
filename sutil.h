@@ -1115,6 +1115,7 @@ typedef struct {
     char *description;
     char *version;
     SBuilder extra_help;
+    SBuilder extra_usage;
     char error_buffer[512];
 } SArgContext;
 
@@ -1133,6 +1134,10 @@ typedef struct {
 #define sarg_help_append(context, str) sb_append(&context->extra_help, str);
 
 #define sarg_help_appendf(context, format, ...) sb_appendf(&context->extra_help, format, __VA_ARGS__) 
+
+#define sarg_usage_append(context, str) sb_append(&context->extra_usage, str);
+
+#define sarg_usage_appendf(context, format, ...) sb_appendf(&context->extra_usage, format, __VA_ARGS__) 
 
 SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *description, char *version);
 
@@ -1261,6 +1266,7 @@ SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *descrip
     result->description = description;
     result->version = version;
     result->extra_help = sb_new();
+    result->extra_usage = sb_new();
     result->error_buffer[0] = '\0';
     
     return result;
@@ -1269,6 +1275,7 @@ SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *descrip
 void sarg_context_free(SArgContext *context) {
     list_free(&context->flags);
     sb_free(&context->extra_help);
+    sb_free(&context->extra_usage);
     free(context);
 }
 
@@ -1351,7 +1358,14 @@ void sarg_flag(SArgContext *context, char *name, char *value_name, char *descrip
 }
 
 void sarg_help_print(SArgContext *context) {
-    printf("Usage: %s [arguments]\n", *context->orig_argv[0]);
+    printf("Usage: %s ", *context->orig_argv[0]);
+
+    if(sb_size(&context->extra_usage) == 0) printf("[arguments]\n");
+    else {
+        char *extra_usage = SB(&context->extra_usage);
+        printf("[flags] %s\n", extra_usage);
+        free(extra_usage);
+    }
 
     if(context->description != NULL) printf("%s\n", context->description);
 
