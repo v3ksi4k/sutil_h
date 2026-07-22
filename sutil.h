@@ -1085,7 +1085,86 @@ DString file_readall_ds(char *path, char **out_ptr) {
 #endif // SUTIL_IMPLEMENTATION
 
 
+// ----------Logger----------
+
+typedef enum {
+    SU_DEBUG = 0,
+    SU_INFO = 1, 
+    SU_WARN = 2, 
+    SU_ERROR = 3, 
+    SU_FATAL = 4, 
+} SUtilLogLevel;
+
+void sutil_log(SUtilLogLevel loglevel, char *format, ...);
+
+void sutil_set_log_level(SUtilLogLevel loglevel);
+
+SUtilLogLevel sutil_get_log_level(SUtilLogLevel loglevel);
+
+void sutil_set_exit_code(int exit_code);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+SUtilLogLevel _sutil_log_level_internal = SU_INFO;
+int _sutil_log_exit_code_internal = 1;
+
+void sutil_log(SUtilLogLevel loglevel, char *format, ...) {
+    va_list args;
+    FILE *outf;
+
+    if(_sutil_log_level_internal > loglevel) return;
+
+    if(loglevel >= 2) outf = stderr;
+    else outf = stdout;
+       
+    va_start(args, format);
+
+    switch(loglevel) {
+        case SU_DEBUG:
+            fprintf(outf, "[DEBUG] ");
+        break;
+        case SU_INFO:
+            fprintf(outf, "[INFO] ");
+        break;
+        case SU_WARN:
+            fprintf(outf, "[WARN] ");
+        break;
+        case SU_ERROR:
+            fprintf(outf, "[ERROR] ");
+        break;
+        case SU_FATAL:
+            fprintf(outf, "[FATAL] ");
+        break;
+        default:
+            UNREACHABLE();
+        break;
+    }
+
+    vfprintf(outf, format, args);
+    fprintf(outf, "\n");
+    va_end(args);
+
+    if(loglevel == SU_FATAL && _sutil_log_exit_code_internal != -1) exit(_sutil_log_exit_code_internal);
+}
+
+void sutil_set_log_level(SUtilLogLevel loglevel) {
+    _sutil_log_level_internal = loglevel;
+};
+
+SUtilLogLevel sutil_get_log_level(SUtilLogLevel loglevel) {
+    return _sutil_log_level_internal;
+}
+
+void sutil_set_exit_code(int exit_code) {
+    _sutil_log_exit_code_internal = exit_code;
+};
+
+#endif // SUTIL_IMPLEMENTATION
+
+
 // ----------SArg (Argument parsing)----------
+
+#define SUTIL_LOG_EXIT_CODE_NOEXIT -1
 
 typedef enum {
     SARG_BOOL,
