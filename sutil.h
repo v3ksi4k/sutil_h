@@ -128,9 +128,9 @@ typedef double   f64;
 #define HOURS_IN_SECS(n) (3600UL * (n))
 #define DAYS_IN_SECS(n) (86400UL * (n))
 
-#define MILIS_IN_MINUTES ((n) / 60000.0) 
-#define MILIS_IN_HOURS ((n) / 3600000.0) 
-#define MILIS_IN_DAYS ((n) / 86400000.0) 
+#define MILIS_IN_MINUTES(n) ((n) / 60000.0) 
+#define MILIS_IN_HOURS(n) ((n) / 3600000.0) 
+#define MILIS_IN_DAYS(n) ((n) / 86400000.0) 
 
 #define SECS_IN_MINUTES(n) ((n) / 60.0)
 #define SECS_IN_HOURS(n) ((n) / 360.0)
