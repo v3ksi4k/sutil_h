@@ -1441,7 +1441,6 @@ void sarg_parse(SArgContext *context) {
             return;
         }
 
-        // TODO: Implement better error handling
         if(!flag_found) {
             _sarg_error_return_internal(context, (void)0, "Unknown flag '%s'", arg);
         };
