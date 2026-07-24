@@ -116,6 +116,27 @@ typedef double   f64;
 #define MEM_ALIGN(n) (((n) + 7) & ~7)
 
 
+// ----------Units of time----------
+
+#define SECS_IN_MILIS(n) (1000UL * (n))
+#define MINUTES_IN_MILIS(n) (60000UL * (n))
+#define HOURS_IN_MILIS(n) (3600000UL * (n))
+#define DAYS_IN_MILIS(n) (86400000UL * (n))
+
+#define MILIS_IN_SECS(n) ((n) / 1000.0)
+#define MINUTES_IN_SECS(n) (60UL * (n))
+#define HOURS_IN_SECS(n) (3600UL * (n))
+#define DAYS_IN_SECS(n) (86400UL * (n))
+
+#define MILIS_IN_MINUTES ((n) / 60000.0) 
+#define MILIS_IN_HOURS ((n) / 3600000.0) 
+#define MILIS_IN_DAYS ((n) / 86400000.0) 
+
+#define SECS_IN_MINUTES(n) ((n) / 60.0)
+#define SECS_IN_HOURS(n) ((n) / 360.0)
+#define SECS_IN_DAYS(n) ((n) / 86400.0)
+
+
 // ----------List (Dynamic Array)----------
 
 #define LIST_DEFAULT_INITIAL_CAPACITY 16
