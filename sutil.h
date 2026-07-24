@@ -71,6 +71,15 @@ do { \
  */
 #define UNUSED(x) (void)x
 
+/**
+ * @brief Decrement `argc` and move `argv` by one item to effectively get the next argument
+ */
+#define shift_args(argc, argv) \
+do { \
+    argc--; \
+    argv++; \
+} while(0)
+
 
 // ----------Numeric types----------
 
