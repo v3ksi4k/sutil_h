@@ -798,7 +798,7 @@ DString ds_chop_word_right(DString *str) {
 #endif // SUTIL_IMPLEMENTATION
 
 
-// ----------String Utilities----------
+// ----------String and Memory Utilities----------
 
 /**
  * @brief Clones a string by allocating space on the heap and copying it
@@ -807,6 +807,15 @@ DString ds_chop_word_right(DString *str) {
  * @note The result must be freed
  */
 char *cstr_clone(char *str);
+
+/**
+ * @brief Clones the memory pointed to by `mem` into a newly allocated buffer
+ * @param mem A pointer to the memory which should be copied
+ * @param size The amount of bytes which should be copied
+ * @result A pointer to the copied memory
+ * @note The result must be freed
+ */
+void *mem_clone(void *mem, size_t size);
 
 /**
  * @brief Returns the length of a printf-formatted string after evaluation
@@ -827,6 +836,14 @@ char *cstr_clone(char *str) {
 
     return result;
 };
+
+void *mem_clone(void *mem, size_t size) {
+    void *result = malloc(size);
+
+    memcpy(result, mem, size);
+
+    return result;
+}
 
 #endif // SUTIL_IMPLEMENTATION
 
