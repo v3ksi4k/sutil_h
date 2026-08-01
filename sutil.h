@@ -343,6 +343,7 @@ typedef struct {
     size_t block_size;
 } MemArena;
 
+// TODO: Make this function internal
 MemBlock *mem_block_new(size_t capacity);
 
 /**
@@ -1213,8 +1214,6 @@ void sutil_set_exit_code(int exit_code) {
 
 // ----------SArg (Argument parsing)----------
 
-#define SUTIL_LOG_EXIT_CODE_NOEXIT -1
-
 typedef enum {
     SARG_BOOL,
     SARG_STRING,
@@ -1293,6 +1292,7 @@ void sarg_version_print(SArgContext *context);
 #define _sarg_shift_internal(context) context->argc--; context->argv++;
 #define _sarg_unshift_internal(context) context->argc++; context->argv--;
 
+// TODO: Unify the naming of internal functions
 float _sarg_parse_float_internal(SArgContext *context, SArgFlag *flag) {
     if(context->argc <= 1) { 
         _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt(float));
@@ -1520,6 +1520,123 @@ void sarg_help_print(SArgContext *context) {
 void sarg_version_print(SArgContext *context) {
     if(context->version != NULL) printf("%s %s\n", context->name, context->version);
     else printf("%s (version unspecified)\n", context->name);
+}
+
+#endif // SUTIL_IMPLEMENTATION
+
+
+// ----------Hash Map (Simple implementation)----------
+
+#define HMAP_DEFAULT_BUCKET_COUNT 64
+
+typedef struct HMapNode HMapNode;
+
+struct HMapNode {
+    uint64_t key;
+    void *value;
+    HMapNode *next;
+};
+
+typedef struct {
+    HMapNode **buckets;
+    size_t bucket_count;
+    size_t value_size;
+} HMap;
+
+HMap hmap_new_cnt(size_t value_size, size_t bucket_count);
+
+#define hmap_new(value_size) hmap_new_cnt(value_size, HMAP_DEFAULT_BUCKET_COUNT)
+
+void hmap_free(HMap *hmap);
+
+void hmap_insert(HMap *hmap, char *key, void *value);
+
+void *hmap_get(HMap *hmap, char *key);
+
+#ifdef SUTIL_IMPLEMENTATION
+
+uint64_t _sutil_djb2_hash_internal(char *str) {
+    uint64_t hash = 5381;
+
+    for(char c = *str; c != '\0'; c = *str++) {
+        hash = ((hash << 5) + hash) + c;
+    }
+
+    return hash;
+}
+
+HMap hmap_new_cnt(size_t value_size, size_t bucket_count) {
+    HMap result;
+
+    result.buckets = calloc(sizeof(HMapNode*), bucket_count);
+    result.bucket_count = bucket_count;
+    result.value_size = value_size;
+
+    return result;
+}
+
+void hmap_free(HMap *hmap) {
+    for(size_t i = 0; i < hmap->bucket_count; i++) {
+        HMapNode *node = hmap->buckets[i];
+
+        while(node != NULL) {
+            free(node->value);
+            HMapNode *tmp = node->next;
+            free(node);
+            node = tmp;
+        }
+    }
+
+    hmap->bucket_count = 0;
+    free(hmap->buckets);
+}
+
+void hmap_insert(HMap *hmap, char *key, void *value) {
+    uint64_t hash = _sutil_djb2_hash_internal(key);
+    size_t idx = hash % hmap->bucket_count; 
+
+    HMapNode **bucket = hmap->buckets + idx;
+    HMapNode *node = NULL;
+
+    if(*bucket == NULL) {
+        hmap->buckets[idx] = malloc(sizeof(HMapNode));
+        node = *bucket;
+        node->value = malloc(hmap->value_size);
+    } else {
+        node = *bucket;
+        HMapNode *prev = NULL;
+
+        while(node != NULL && node->key != hash) {
+            if(node->key == hash) break;
+            prev = node;
+            node = node->next;
+        }
+
+        if(node == NULL) {
+            node = malloc(sizeof(HMapNode));
+            node->value = malloc(hmap->value_size);
+            if(prev != NULL) prev->next = node;
+        }
+    }
+
+
+    memcpy(node->value, value, hmap->value_size);
+    node->key = hash;
+    node->next = NULL;
+}
+
+void *hmap_get(HMap *hmap, char *key) {
+    uint64_t hash = _sutil_djb2_hash_internal(key);
+    size_t idx = hash % hmap->bucket_count; 
+
+    HMapNode *node = hmap->buckets[idx];
+
+    while(node != NULL) {
+        if(node->key == hash) return node->value; 
+        node = node->next;
+    }
+
+    return NULL;
 }
 
 #endif // SUTIL_IMPLEMENTATION
