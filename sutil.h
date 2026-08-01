@@ -1149,7 +1149,7 @@ void sutil_log(SUtilLogLevel loglevel, char *format, ...);
 
 void sutil_set_log_level(SUtilLogLevel loglevel);
 
-SUtilLogLevel sutil_get_log_level(SUtilLogLevel loglevel);
+SUtilLogLevel sutil_get_log_level();
 
 void sutil_set_exit_code(int exit_code);
 
@@ -1201,7 +1201,7 @@ void sutil_set_log_level(SUtilLogLevel loglevel) {
     _sutil_log_level_internal = loglevel;
 };
 
-SUtilLogLevel sutil_get_log_level(SUtilLogLevel loglevel) {
+SUtilLogLevel sutil_get_log_level() {
     return _sutil_log_level_internal;
 }
 
