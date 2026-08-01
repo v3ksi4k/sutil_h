@@ -825,6 +825,8 @@ void *mem_clone(void *mem, size_t size);
  */
 #define printf_fmt_len(format, ...) snprintf(NULL, 0, format, __VA_ARGS__) 
 
+#define DRF(type) *(type*)
+
 #ifdef SUTIL_IMPLEMENTATION
 
 char *cstr_clone(char *str) {
