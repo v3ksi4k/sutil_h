@@ -1681,17 +1681,22 @@ int main(int argc, char **argv) {
 
     unsigned char buffer[1024];
 
+    size_t array_size = 0;
+
     while(!feof(f)) {
-        size_t size = fread(buffer, 1, sizeof(buffer) - 4, f);
+        size_t size = fread(buffer, 1, sizeof(buffer), f);
         for(size_t i = 1; i < size + 1; i++) {
             printf("0x%02X,", buffer[i-1]);
             if(i % 10 == 0) printf("\n    ");
+            array_size++;
         }
     }
 
     if(!use_stdin) fclose(f);
 
-    printf("\n};\n");
+    printf("\n};\n\n");
+
+    printf("size_t %s_len = %ld;\n", argv[1], array_size);
 }
 
 #endif // SUTIL_HEXDUMP
