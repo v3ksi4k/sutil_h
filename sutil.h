@@ -1140,9 +1140,10 @@ DString file_readall_ds(char *path, char **out_ptr) {
 typedef enum {
     SU_DEBUG = 0,
     SU_INFO = 1, 
-    SU_WARN = 2, 
-    SU_ERROR = 3, 
-    SU_FATAL = 4, 
+    SU_CMD = 2,
+    SU_WARN = 3, 
+    SU_ERROR = 4, 
+    SU_FATAL = 5, 
 } SUtilLogLevel;
 
 void sutil_log(SUtilLogLevel loglevel, char *format, ...);
@@ -1164,7 +1165,7 @@ void sutil_log(SUtilLogLevel loglevel, char *format, ...) {
 
     if(_sutil_log_level_internal > loglevel) return;
 
-    if(loglevel >= 2) outf = stderr;
+    if(loglevel >= SU_WARN) outf = stderr;
     else outf = stdout;
        
     va_start(args, format);
@@ -1175,6 +1176,9 @@ void sutil_log(SUtilLogLevel loglevel, char *format, ...) {
         break;
         case SU_INFO:
             fprintf(outf, "[INFO] ");
+        break;
+        case SU_CMD:
+            fprintf(outf, "[CMD] ");
         break;
         case SU_WARN:
             fprintf(outf, "[WARN] ");
