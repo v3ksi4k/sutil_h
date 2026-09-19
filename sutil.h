@@ -87,7 +87,7 @@ typedef int8_t   i8;
 typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
- 
+
 typedef uint8_t  u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -128,9 +128,9 @@ typedef double   f64;
 #define HOURS_IN_SECS(n) (3600UL * (n))
 #define DAYS_IN_SECS(n) (86400UL * (n))
 
-#define MILIS_IN_MINUTES(n) ((n) / 60000.0) 
-#define MILIS_IN_HOURS(n) ((n) / 3600000.0) 
-#define MILIS_IN_DAYS(n) ((n) / 86400000.0) 
+#define MILIS_IN_MINUTES(n) ((n) / 60000.0)
+#define MILIS_IN_HOURS(n) ((n) / 3600000.0)
+#define MILIS_IN_DAYS(n) ((n) / 86400000.0)
 
 #define SECS_IN_MINUTES(n) ((n) / 60.0)
 #define SECS_IN_HOURS(n) ((n) / 360.0)
@@ -228,7 +228,7 @@ do { \
 #define list_size_cap(list) (list)->capacity * sizeof(*((list)->items))
 
 /**
- * @brief Iterate through all items held by `list` in a for loop which intitializes a variable `name` and sets it to the current item 
+ * @brief Iterate through all items held by `list` in a for loop which intitializes a variable `name` and sets it to the current item
  * @param name The name of a variable which will be set to the current item by the for loop
  */
 #define list_foreach(list, type, name) for(type *(name) = (list)->items; (name) < (list)->items + (list)->item_count; (name)++)
@@ -338,8 +338,8 @@ struct MemBlock {
 };
 
 typedef struct {
-    MemBlock *head; 
-    MemBlock *tail; 
+    MemBlock *head;
+    MemBlock *tail;
     size_t block_size;
 } MemArena;
 
@@ -391,7 +391,7 @@ MemBlock *mem_block_new(size_t capacity) {
 }
 
 MemArena arena_new_bs(size_t block_size) {
-    MemArena result;    
+    MemArena result;
 
     result.block_size = block_size;
     result.head = mem_block_new(block_size);
@@ -824,7 +824,7 @@ void *mem_clone(void *mem, size_t size);
  * @param ... Variadic arguments which will be passed to pritnf
  * @note The returned len doesn't include the null-terminator
  */
-#define printf_fmt_len(format, ...) snprintf(NULL, 0, format, __VA_ARGS__) 
+#define printf_fmt_len(format, ...) snprintf(NULL, 0, format, __VA_ARGS__)
 
 #define DRF(type) *(type*)
 
@@ -942,7 +942,7 @@ void sb_append(SBuilder *sb, char *str) {
     StringChunk *chunk = string_chunk_new(str, str_len);
 
     if(sb->head == NULL) {
-        sb->head = chunk; 
+        sb->head = chunk;
         sb->tail = chunk;
     } else {
         sb->tail->next = chunk;
@@ -963,7 +963,7 @@ void sb_appendf(SBuilder *sb, char *format, ...) {
     char *buf = buffer;
 
     size_t size = vsnprintf(buf, sizeof(buffer), format, args);
-    
+
     if(size > sizeof(buffer)) {
         buf = (char*)malloc(size);
         vsnprintf(buf, size, format, args);
@@ -975,7 +975,7 @@ void sb_appendf(SBuilder *sb, char *format, ...) {
     if(buf != buffer) free(buf);
 
     if(sb->head == NULL) {
-        sb->head = chunk; 
+        sb->head = chunk;
         sb->tail = chunk;
     } else {
         sb->tail->next = chunk;
@@ -1086,7 +1086,7 @@ ShortString ss_new_f(char *format, ...) {
 
 /**
  * @brief Read an entire file from `path`, return its contents as a null-terminates string to `out_ptr` and their size
- * @param path A pre-validated path to a file 
+ * @param path A pre-validated path to a file
  * @param out_ptr A pointer which will point to a null-terminated string containing the contents of the file
  * @result Size of the contents of the file in bytes
  * @note If the size of the contents is not needed, use `file_readall`
@@ -1095,11 +1095,15 @@ size_t file_readall_sz(char *path, char **out_ptr);
 
 /**
  * @brief Read an entire file from `path` and return its contents as a null-terminated string
- * @param path A pre-validated path to a file 
+ * @param path A pre-validated path to a file
  * @result Pointer to a null-terminated string with the contents of the file
  * @note If the size of the contents is needed, use `file_readall`
  */
 char *file_readall(char *path);
+
+DString file_readall_ds(char *path, char **out_ptr);
+
+size_t file_length(FILE *f);
 
 #ifdef SUTIL_IMPLEMENTATION
 
@@ -1121,9 +1125,9 @@ size_t file_readall_sz(char *path, char **out_ptr) {
 
 char *file_readall(char *path) {
     char *result;
-    
+
     file_readall_sz(path, &result);
-    
+
     return result;
 }
 
@@ -1132,6 +1136,16 @@ DString file_readall_ds(char *path, char **out_ptr) {
     return ds_new_wrap(*out_ptr);
 }
 
+size_t file_length(FILE *f) {
+    size_t result;
+
+    fseek(f, 0, SEEK_END);
+    result = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    return result;
+};
+
 #endif // SUTIL_IMPLEMENTATION
 
 
@@ -1139,11 +1153,11 @@ DString file_readall_ds(char *path, char **out_ptr) {
 
 typedef enum {
     SU_DEBUG = 0,
-    SU_INFO = 1, 
+    SU_INFO = 1,
     SU_CMD = 2,
-    SU_WARN = 3, 
-    SU_ERROR = 4, 
-    SU_FATAL = 5, 
+    SU_WARN = 3,
+    SU_ERROR = 4,
+    SU_FATAL = 5,
 } SUtilLogLevel;
 
 void sutil_log(SUtilLogLevel loglevel, char *format, ...);
@@ -1167,7 +1181,7 @@ void sutil_log(SUtilLogLevel loglevel, char *format, ...) {
 
     if(loglevel >= SU_WARN) outf = stderr;
     else outf = stdout;
-       
+
     va_start(args, format);
 
     switch(loglevel) {
@@ -1264,11 +1278,11 @@ typedef struct {
 
 #define sarg_help_append(context, str) sb_append(&context->extra_help, str);
 
-#define sarg_help_appendf(context, format, ...) sb_appendf(&context->extra_help, format, __VA_ARGS__) 
+#define sarg_help_appendf(context, format, ...) sb_appendf(&context->extra_help, format, __VA_ARGS__)
 
 #define sarg_usage_append(context, str) sb_append(&context->extra_usage, str);
 
-#define sarg_usage_appendf(context, format, ...) sb_appendf(&context->extra_usage, format, __VA_ARGS__) 
+#define sarg_usage_appendf(context, format, ...) sb_appendf(&context->extra_usage, format, __VA_ARGS__)
 
 SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *description, char *version);
 
@@ -1298,7 +1312,7 @@ void sarg_version_print(SArgContext *context);
 
 // TODO: Unify the naming of internal functions
 float _sarg_parse_float_internal(SArgContext *context, SArgFlag *flag) {
-    if(context->argc <= 1) { 
+    if(context->argc <= 1) {
         _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt(float));
     }
 
@@ -1308,7 +1322,7 @@ float _sarg_parse_float_internal(SArgContext *context, SArgFlag *flag) {
 
     if(*next == '-') {
         _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt());
-    } 
+    }
 
     size_t next_len = strlen(next);
 
@@ -1323,7 +1337,7 @@ float _sarg_parse_float_internal(SArgContext *context, SArgFlag *flag) {
 }
 
 int _sarg_parse_int_internal(SArgContext *context, SArgFlag *flag) {
-    if(context->argc <= 1) { 
+    if(context->argc <= 1) {
         _sarg_error_return_internal(context, 0.0f, _sarg_no_value_error_fmt(int));
     }
 
@@ -1333,7 +1347,7 @@ int _sarg_parse_int_internal(SArgContext *context, SArgFlag *flag) {
 
     if(*next == '-') {
         _sarg_error_return_internal(context, 0.0f, _sarg_next_flag_error_fmt());
-    } 
+    }
 
     size_t next_len = strlen(next);
 
@@ -1400,7 +1414,7 @@ SArgContext *sarg_context_new(int *argc, char ***argv, char *name, char *descrip
     result->extra_help = sb_new();
     result->extra_usage = sb_new();
     result->error_buffer[0] = '\0';
-    
+
     return result;
 }
 
@@ -1479,9 +1493,9 @@ void sarg_flag(SArgContext *context, char *name, char *value_name, char *descrip
     SArgFlag flag;
 
     flag.type = type;
-    flag.name = name; 
-    flag.value_name = value_name; 
-    flag.description = description; 
+    flag.name = name;
+    flag.value_name = value_name;
+    flag.description = description;
     flag.storage = storage;
     flag.storage_size = storage_size;
 
@@ -1597,7 +1611,7 @@ void hmap_free(HMap *hmap) {
 
 void hmap_insert(HMap *hmap, char *key, void *value) {
     uint64_t hash = _sutil_djb2_hash_internal(key);
-    size_t idx = hash % hmap->bucket_count; 
+    size_t idx = hash % hmap->bucket_count;
 
     HMapNode **bucket = hmap->buckets + idx;
     HMapNode *node = NULL;
@@ -1631,12 +1645,12 @@ void hmap_insert(HMap *hmap, char *key, void *value) {
 
 void *hmap_get(HMap *hmap, char *key) {
     uint64_t hash = _sutil_djb2_hash_internal(key);
-    size_t idx = hash % hmap->bucket_count; 
+    size_t idx = hash % hmap->bucket_count;
 
     HMapNode *node = hmap->buckets[idx];
 
     while(node != NULL) {
-        if(node->key == hash) return node->value; 
+        if(node->key == hash) return node->value;
         node = node->next;
     }
 
@@ -1674,7 +1688,7 @@ int main(int argc, char **argv) {
         use_stdin = true;
         f = stdin;
     } else if(argc != 3) usage();
-    
+
     struct stat ignore;
 
     if(!use_stdin && stat(argv[2], &ignore) == -1) usage();
